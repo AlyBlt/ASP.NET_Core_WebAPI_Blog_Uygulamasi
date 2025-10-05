@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
+using App.Api.Models.DTOs;
 
 namespace App.Api.Controllers
 {
@@ -34,7 +35,7 @@ namespace App.Api.Controllers
         {
             var article = articles.Find(x => x.Id == id);
             if (article == null)
-                return NotFound();
+                return NotFound("Makale bulunamadı.");
             return Ok(article);
 
         }
@@ -43,12 +44,18 @@ namespace App.Api.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Article))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
-        [Consumes(typeof(Article), "application/json")]
-        public IActionResult CreateArticle(Article article)
+        [Consumes("application/json")]
+        public IActionResult CreateArticle(ArticleDTO article)
         {
-            if (string.IsNullOrWhiteSpace(article.Title))
-                return BadRequest("Makale başlığı boş olamaz.");
-             var item = new Article
+            //if (string.IsNullOrWhiteSpace(article.Title))
+            //    return BadRequest("Makale başlığı boş olamaz.");
+
+            if (!ModelState.IsValid)            
+            {
+                return BadRequest(ModelState);
+            }
+
+            var item = new Article
             {
                 Id = _nextId,
                 Title = article.Title,
@@ -56,11 +63,9 @@ namespace App.Api.Controllers
             };
             _nextId++;
             articles.Add(item);
-            return CreatedAtAction(nameof(GetArticle), new { id = item.Id }, new
-            {
-                message = "Yeni makale oluşturuldu.",
-                data = item
-            });
+
+            return CreatedAtAction(nameof(GetArticle), new { id = item.Id }, item);
+            //buraya mesaj yazılabilir! Bakılacak!!
         }
 
 
@@ -68,11 +73,16 @@ namespace App.Api.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Article))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        [Consumes(typeof(Article), "application/json")]
-        public IActionResult UpdateArticle(int id, Article article)
+        [Consumes("application/json")]
+        public IActionResult UpdateArticle(int id, [FromBody] ArticleDTO article)
         {
-            if (string.IsNullOrWhiteSpace(article.Title))
-                return BadRequest("Makale başlığı boş olamaz.");
+            //if (string.IsNullOrWhiteSpace(article.Title))
+            //    return BadRequest("Makale başlığı boş olamaz.");
+
+            if (!ModelState.IsValid)            
+            {
+                return BadRequest(ModelState);
+            }
 
             var index = articles.FindIndex(x => x.Id == id);
             if (index == -1)
@@ -95,20 +105,18 @@ namespace App.Api.Controllers
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         public IActionResult DeleteArticle(int id)
         {
-            var index = articles.FindIndex(x => x.Id == id);
+            var article = articles.FirstOrDefault(x => x.Id == id);
 
-            if (index == -1)
+            if (article == null)
                 return NoContent();
 
-            articles.RemoveAt(index);
+            articles.Remove(article);
 
             return Ok(new
             {
                 message = "Makale silindi.",
-                data = articles[index]
-
-            });  
-
+                data = article
+            });
 
         }
 
