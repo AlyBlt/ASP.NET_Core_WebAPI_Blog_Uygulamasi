@@ -18,8 +18,6 @@ namespace App.Api.Controllers
 
         private static int _nextId = 3;
 
-
-
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Article>))]
         public IActionResult GetList()
@@ -27,19 +25,16 @@ namespace App.Api.Controllers
             return Ok(articles);
         }
 
-
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Article))]
-        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string)) ]
+        [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public IActionResult GetArticle(int id)
         {
             var article = articles.Find(x => x.Id == id);
             if (article == null)
                 return NotFound("Makale bulunamadı.");
             return Ok(article);
-
         }
-
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Article))]
@@ -65,7 +60,6 @@ namespace App.Api.Controllers
             articles.Add(item);
 
             return CreatedAtAction(nameof(GetArticle), new { id = item.Id }, item);
-            //buraya mesaj yazılabilir! Bakılacak!!
         }
 
 
@@ -94,11 +88,10 @@ namespace App.Api.Controllers
             return Ok(new
             {
                 message = "Makale güncellendi.",
-                data = articles[index]
+                data=articles[index]
             });
 
         }
-
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -119,9 +112,6 @@ namespace App.Api.Controllers
             });
 
         }
-
-
-
 
     }
 }
