@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
-using App.Api.Models.DTOs;
+using App.Api.DTOs;
 
 namespace App.Api.Controllers
 {
@@ -19,28 +19,47 @@ namespace App.Api.Controllers
         private static int _nextId = 3;
 
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<Article>))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ArticleReadDto>))]
         public IActionResult GetList()
         {
-            return Ok(articles);
+            //return Ok(articles);
+            var result = articles.Select(x => new ArticleReadDto
+            {
+                Id = x.Id,
+                Title = x.Title,
+                Content = x.Content,
+                CreatedAt = x.CreatedAt
+            }).ToList();
+
+            return Ok(result);
         }
 
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Article))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
         public IActionResult GetArticle(int id)
         {
             var article = articles.Find(x => x.Id == id);
             if (article == null)
                 return NotFound("Makale bulunamadı.");
-            return Ok(article);
+            //if (article == null)
+            //    return NotFound("Makale bulunamadı.");
+            //return Ok(article);
+            var result = new ArticleReadDto
+            {
+                Id = article.Id,
+                Title = article.Title,
+                Content = article.Content,
+                CreatedAt = article.CreatedAt
+            };
+            return Ok(result);
         }
 
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(Article))]
+        [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [Consumes("application/json")]
-        public IActionResult CreateArticle(ArticleDTO article)
+        public IActionResult CreateArticle(ArticleCreateDto article)
         {
             //if (string.IsNullOrWhiteSpace(article.Title))
             //    return BadRequest("Makale başlığı boş olamaz.");
@@ -54,21 +73,30 @@ namespace App.Api.Controllers
             {
                 Id = _nextId,
                 Title = article.Title,
-                Content = article.Content
+                Content = article.Content,
+                CreatedAt = DateTime.UtcNow
             };
             _nextId++;
             articles.Add(item);
 
-            return CreatedAtAction(nameof(GetArticle), new { id = item.Id }, item);
+            var result = new ArticleReadDto
+            {
+                Id = item.Id,
+                Title = item.Title,
+                Content = item.Content,
+                CreatedAt = item.CreatedAt
+            };
+
+            return CreatedAtAction(nameof(GetArticle), new { id = item.Id }, result);
         }
 
 
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(Article))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Consumes("application/json")]
-        public IActionResult UpdateArticle(int id, [FromBody] ArticleDTO article)
+        public IActionResult UpdateArticle(int id, [FromBody] ArticleUpdateDto article)
         {
             //if (string.IsNullOrWhiteSpace(article.Title))
             //    return BadRequest("Makale başlığı boş olamaz.");
@@ -85,31 +113,35 @@ namespace App.Api.Controllers
             articles[index].Title = article.Title;
             articles[index].Content = article.Content;
 
+            var updatedArticle = articles[index];
+            var result = new ArticleReadDto
+            {
+                Id = updatedArticle.Id,
+                Title = updatedArticle.Title,
+                Content = updatedArticle.Content,
+                CreatedAt = updatedArticle.CreatedAt
+            };
             return Ok(new
             {
                 message = "Makale güncellendi.",
-                data=articles[index]
+                data = result
             });
 
         }
 
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public IActionResult DeleteArticle(int id)
         {
             var article = articles.FirstOrDefault(x => x.Id == id);
 
             if (article == null)
-                return NoContent();
+                return NotFound("Makale bulunamadı.");
 
             articles.Remove(article);
 
-            return Ok(new
-            {
-                message = "Makale silindi.",
-                data = article
-            });
+            return NoContent();
 
         }
 

@@ -1,6 +1,6 @@
-﻿namespace App.Api.Models
+﻿namespace App.Api.DTOs
 {
-    public class Article
+    public class ArticleReadDto
     {
         public int Id { get; set; }
         public string Title { get; set; }

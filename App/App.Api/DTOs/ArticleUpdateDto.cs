@@ -1,13 +1,13 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace App.Api.Models.DTOs
+namespace App.Api.DTOs
 {
-    public class ArticleDTO
+    public class ArticleUpdateDto
     {
         [Required]
         [MinLength(1, ErrorMessage = "Title cannot be empty.")]
         public string Title { get; set; }
-        public string Content { get; set; }
 
+        public string Content { get; set; }
     }
 }
