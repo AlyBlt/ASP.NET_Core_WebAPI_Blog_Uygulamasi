@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Headers;
 using App.Api.DTOs;
+using App.Api.Services.Interfaces;
 
 namespace App.Api.Controllers
 {
@@ -10,84 +11,46 @@ namespace App.Api.Controllers
     [ApiController]
     public class ArticlesController : ControllerBase
     {
-        private static List<Article> articles = new List<Article>
+        
+        private readonly IArticleService _service;
+        public ArticlesController(IArticleService service)
         {
-            new Article { Id = 1, Title = "ASP.NET Core ile Web API Geliştirme", Content = "Bu makalede ASP.NET Core ile Web API geliştirmenin temellerini öğreneceksiniz." },
-            new Article { Id = 2, Title = "Postman Kullanımı", Content = "Postman ile API testlerini nasıl yapabileceğinizi öğreneceksiniz." }
-        };
-
-        private static int _nextId = 3;
+            _service = service;
+        }
 
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<ArticleReadDto>))]
-        public IActionResult GetList()
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ArticleReadDto>))]
+        
+        public async Task<IActionResult> GetAll()
         {
-            //return Ok(articles);
-            var result = articles.Select(x => new ArticleReadDto
-            {
-                Id = x.Id,
-                Title = x.Title,
-                Content = x.Content,
-                CreatedAt = x.CreatedAt
-            }).ToList();
-
-            return Ok(result);
+            var articles = await _service.GetAllAsync();
+            return Ok(articles);
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(string))]
-        public IActionResult GetArticle(int id)
+        
+        public async Task<IActionResult> GetById(int id)
         {
-            var article = articles.Find(x => x.Id == id);
+            var article = await _service.GetByIdAsync(id);
             if (article == null)
                 return NotFound("Makale bulunamadı.");
-            //if (article == null)
-            //    return NotFound("Makale bulunamadı.");
-            //return Ok(article);
-            var result = new ArticleReadDto
-            {
-                Id = article.Id,
-                Title = article.Title,
-                Content = article.Content,
-                CreatedAt = article.CreatedAt
-            };
-            return Ok(result);
+            return Ok(article);
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [Consumes("application/json")]
-        public IActionResult CreateArticle(ArticleCreateDto article)
+        
+        public async Task<IActionResult> Create([FromBody] ArticleCreateDto dto)
         {
-            //if (string.IsNullOrWhiteSpace(article.Title))
-            //    return BadRequest("Makale başlığı boş olamaz.");
-
-            if (!ModelState.IsValid)            
-            {
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            }
 
-            var item = new Article
-            {
-                Id = _nextId,
-                Title = article.Title,
-                Content = article.Content,
-                CreatedAt = DateTime.UtcNow
-            };
-            _nextId++;
-            articles.Add(item);
-
-            var result = new ArticleReadDto
-            {
-                Id = item.Id,
-                Title = item.Title,
-                Content = item.Content,
-                CreatedAt = item.CreatedAt
-            };
-
-            return CreatedAtAction(nameof(GetArticle), new { id = item.Id }, result);
+            var created = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
 
@@ -96,53 +59,33 @@ namespace App.Api.Controllers
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Consumes("application/json")]
-        public IActionResult UpdateArticle(int id, [FromBody] ArticleUpdateDto article)
+        
+        public async Task<IActionResult> Update(int id, [FromBody] ArticleUpdateDto dto)
         {
-            //if (string.IsNullOrWhiteSpace(article.Title))
-            //    return BadRequest("Makale başlığı boş olamaz.");
-
-            if (!ModelState.IsValid)            
-            {
+            if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-            }
 
-            var index = articles.FindIndex(x => x.Id == id);
-            if (index == -1)
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null)
                 return NotFound("Makale bulunamadı.");
-  
-            articles[index].Title = article.Title;
-            articles[index].Content = article.Content;
 
-            var updatedArticle = articles[index];
-            var result = new ArticleReadDto
-            {
-                Id = updatedArticle.Id,
-                Title = updatedArticle.Title,
-                Content = updatedArticle.Content,
-                CreatedAt = updatedArticle.CreatedAt
-            };
-            return Ok(new
-            {
-                message = "Makale güncellendi.",
-                data = result
-            });
-
+            await _service.UpdateAsync(id, dto);
+            return NoContent();
         }
+
 
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public IActionResult DeleteArticle(int id)
+       
+        public async Task<IActionResult> Delete(int id)
         {
-            var article = articles.FirstOrDefault(x => x.Id == id);
-
-            if (article == null)
+            var existing = await _service.GetByIdAsync(id);
+            if (existing == null)
                 return NotFound("Makale bulunamadı.");
 
-            articles.Remove(article);
-
+            await _service.DeleteAsync(id);
             return NoContent();
-
         }
 
     }
