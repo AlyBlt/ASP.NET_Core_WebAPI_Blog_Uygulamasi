@@ -4,15 +4,23 @@ using App.Api.Repositories.Implementations;
 using App.Api.Repositories.Interfaces;
 using App.Api.Services.Implementations;
 using App.Api.Services.Interfaces;
+using App.Api.Validators;
 using Microsoft.EntityFrameworkCore;
+using FluentValidation;
+using FluentValidation.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Logging.ClearProviders(); // varsa öncekileri temizle
 builder.Logging.AddConsole();     // console log ekle
 
+builder.Services.AddFluentValidationAutoValidation(); // Middleware için
+builder.Services.AddFluentValidationClientsideAdapters(); // Opsiyonel, Swagger / UI tarafý için
+builder.Services.AddValidatorsFromAssemblyContaining<ArticleValidator>();
+
 builder.Services.AddDbContext<BlogDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
 
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 builder.Services.AddScoped<IArticleService, ArticleService>();

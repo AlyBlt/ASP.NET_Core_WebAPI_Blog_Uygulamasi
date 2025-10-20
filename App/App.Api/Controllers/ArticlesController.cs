@@ -1,9 +1,14 @@
-﻿using App.Api.Models;
+﻿using App.Api.DTOs;
+using App.Api.Models;
+using App.Api.Services.Implementations;
+using App.Api.Services.Interfaces;
+using App.Api.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
-using App.Api.DTOs;
-using App.Api.Services.Interfaces;
+
 
 namespace App.Api.Controllers
 {
@@ -11,12 +16,19 @@ namespace App.Api.Controllers
     [ApiController]
     public class ArticlesController : ControllerBase
     {
-        private readonly IArticleService _service;
+        private readonly IArticleService _articleService;
+        private readonly IValidator<ArticleCreateDto> _articleValidator;
+        private readonly IValidator<ArticleUpdateDto> _articleUpdateValidator;
         private readonly ILogger<ArticlesController> _logger;
 
-        public ArticlesController(IArticleService service, ILogger<ArticlesController> logger)
+        public ArticlesController(IArticleService articleService,
+                          IValidator<ArticleCreateDto> articleValidator,
+                          IValidator<ArticleUpdateDto> articleUpdateValidator,
+                          ILogger<ArticlesController> logger)
         {
-            _service = service;
+            _articleService = articleService;
+            _articleValidator = articleValidator;
+            _articleUpdateValidator = articleUpdateValidator;
             _logger = logger;
         }
 
@@ -27,7 +39,7 @@ namespace App.Api.Controllers
         public async Task<IActionResult> GetAll()
         {
             _logger.LogInformation("Tüm makaleleri getirme isteği alındı.");
-            var articles = await _service.GetAllAsync();
+            var articles = await _articleService.GetAllAsync();
             return Ok(articles);
         }
 
@@ -38,7 +50,7 @@ namespace App.Api.Controllers
         public async Task<IActionResult> GetById(int id)
         {
             _logger.LogInformation("Id'si {Id} olan makale getiriliyor.", id);
-            var article = await _service.GetByIdAsync(id);
+            var article = await _articleService.GetByIdAsync(id);
             if (article == null)
             {
                 _logger.LogWarning("Id'si {Id} olan makale bulunamadı.", id);
@@ -54,11 +66,16 @@ namespace App.Api.Controllers
         
         public async Task<IActionResult> Create([FromBody] ArticleCreateDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-            _logger.LogInformation("Yeni makale oluşturma isteği alındı: {@Dto}", dto);
-            var created = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            // Validate the DTO
+            var validationResult = await _articleValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
+            var createdArticle = await _articleService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = createdArticle.Id }, createdArticle);
+
+           
         }
 
 
@@ -70,18 +87,22 @@ namespace App.Api.Controllers
         
         public async Task<IActionResult> Update(int id, [FromBody] ArticleUpdateDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            // FluentValidation kontrolü
+            var validationResult = await _articleUpdateValidator.ValidateAsync(dto);
+            if (!validationResult.IsValid)
+            {
+                return BadRequest(validationResult.Errors);
+            }
 
             _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
-            var existing = await _service.GetByIdAsync(id);
+            var existing = await _articleService.GetByIdAsync(id);
             if (existing == null)
             {
                 _logger.LogWarning("Güncellenecek makale bulunamadı. Id: {Id}", id);
                 return NotFound("Makale bulunamadı.");
             }
 
-            await _service.UpdateAsync(id, dto);
+            await _articleService.UpdateAsync(id, dto);
             return NoContent();
         }
 
@@ -93,13 +114,13 @@ namespace App.Api.Controllers
         public async Task<IActionResult> Delete(int id)
         {
             _logger.LogInformation("Id'si {Id} olan makale siliniyor.", id);
-            var existing = await _service.GetByIdAsync(id);
+            var existing = await _articleService.GetByIdAsync(id);
             if (existing == null)
             {
-                _logger.LogWarning("Silinecek makale bulunamadı. Id: {Id}", id);
+                _logger.LogWarning("Silme işlemi başarısız. Id {Id} bulunamadı.", id);
                 return NotFound("Makale bulunamadı.");
             }
-            await _service.DeleteAsync(id);
+            await _articleService.DeleteAsync(id);
             return NoContent();
         }
 
