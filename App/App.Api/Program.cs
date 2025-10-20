@@ -6,6 +6,9 @@ using App.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Logging.ClearProviders(); // varsa öncekileri temizle
+builder.Logging.AddConsole();     // console log ekle
+
 builder.Services.AddScoped<IArticleRepository, ArticleRepository>();
 builder.Services.AddScoped<IArticleService, ArticleService>();
 

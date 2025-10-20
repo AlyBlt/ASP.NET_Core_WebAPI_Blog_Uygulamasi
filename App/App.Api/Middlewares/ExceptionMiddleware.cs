@@ -18,30 +18,64 @@ namespace App.Api.Middlewares
             _logger = logger;
             _env = env;
         }
-
         public async Task InvokeAsync(HttpContext context)
         {
             try
             {
-                await _next(context); // Sonraki middleware'i çağır
+                await _next(context);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, ex.Message);
-                context.Response.ContentType = "application/json";
-                context.Response.StatusCode = 500;
-
-                var response = new
-                {
-                    statusCode = 500,
-                    message = "Internal Server Error from the middleware.",
-                    detailed = _env.IsDevelopment() ? ex.Message : "Bir hata oluştu."
-                };
-
-                var json = JsonSerializer.Serialize(response);
-                await context.Response.WriteAsync(json);
+                await HandleExceptionAsync(context, ex);
             }
         }
 
+        private async Task HandleExceptionAsync(HttpContext context, Exception exception)
+        {
+            HttpStatusCode statusCode = HttpStatusCode.InternalServerError; // 500 if unexpected
+
+            string message = "Internal Server Error.";
+            string detailed = _env.IsDevelopment() ? exception.ToString() : "Bir hata oluştu.";
+
+            // Örnek: Özel exception türlerini burada yakalayabiliriz
+            if (exception is ArgumentException)
+            {
+                statusCode = HttpStatusCode.BadRequest;
+                message = exception.Message;
+            }
+            else if (exception is UnauthorizedAccessException)
+            {
+                statusCode = HttpStatusCode.Unauthorized;
+                message = "Yetkisiz erişim.";
+            }
+            // İstersen diğer özel exception tiplerini ekleyebilirsin
+
+            _logger.LogError(exception, "Unhandled exception occurred.");
+
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)statusCode;
+
+            var response = new ErrorDetails
+            {
+                StatusCode = (int)statusCode,
+                Message = message,
+                Detailed = detailed
+            };
+
+            var options = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, WriteIndented = true };
+            var json = JsonSerializer.Serialize(response, options);
+
+            await context.Response.WriteAsync(json);
+        }
+        public class ErrorDetails
+        {
+            public int StatusCode { get; set; }
+            public string Message { get; set; }
+            public string Detailed { get; set; }
+        }
     }
+
+
+    
 }
+

@@ -11,18 +11,22 @@ namespace App.Api.Controllers
     [ApiController]
     public class ArticlesController : ControllerBase
     {
-        
         private readonly IArticleService _service;
-        public ArticlesController(IArticleService service)
+        private readonly ILogger<ArticlesController> _logger;
+
+        public ArticlesController(IArticleService service, ILogger<ArticlesController> logger)
         {
             _service = service;
+            _logger = logger;
         }
 
+       
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(IEnumerable<ArticleReadDto>))]
         
         public async Task<IActionResult> GetAll()
         {
+            _logger.LogInformation("Tüm makaleleri getirme isteği alındı.");
             var articles = await _service.GetAllAsync();
             return Ok(articles);
         }
@@ -33,9 +37,13 @@ namespace App.Api.Controllers
         
         public async Task<IActionResult> GetById(int id)
         {
+            _logger.LogInformation("Id'si {Id} olan makale getiriliyor.", id);
             var article = await _service.GetByIdAsync(id);
             if (article == null)
+            {
+                _logger.LogWarning("Id'si {Id} olan makale bulunamadı.", id);
                 return NotFound("Makale bulunamadı.");
+            }
             return Ok(article);
         }
 
@@ -48,7 +56,7 @@ namespace App.Api.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            _logger.LogInformation("Yeni makale oluşturma isteği alındı: {@Dto}", dto);
             var created = await _service.CreateAsync(dto);
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
@@ -56,7 +64,7 @@ namespace App.Api.Controllers
 
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
-        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
+        [ProducesResponseType(StatusCodes.Status204NoContent, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Consumes("application/json")]
         
@@ -65,9 +73,13 @@ namespace App.Api.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
             var existing = await _service.GetByIdAsync(id);
             if (existing == null)
+            {
+                _logger.LogWarning("Güncellenecek makale bulunamadı. Id: {Id}", id);
                 return NotFound("Makale bulunamadı.");
+            }
 
             await _service.UpdateAsync(id, dto);
             return NoContent();
@@ -80,14 +92,24 @@ namespace App.Api.Controllers
        
         public async Task<IActionResult> Delete(int id)
         {
+            _logger.LogInformation("Id'si {Id} olan makale siliniyor.", id);
             var existing = await _service.GetByIdAsync(id);
             if (existing == null)
+            {
+                _logger.LogWarning("Silinecek makale bulunamadı. Id: {Id}", id);
                 return NotFound("Makale bulunamadı.");
-
+            }
             await _service.DeleteAsync(id);
             return NoContent();
         }
 
-       
+        //Exception deneme
+        [HttpGet("throw")]
+        public IActionResult ThrowError()
+        {
+            throw new Exception("Bu test amaçlı bir exception'dır.");
+        }
+
+
     }
 }
