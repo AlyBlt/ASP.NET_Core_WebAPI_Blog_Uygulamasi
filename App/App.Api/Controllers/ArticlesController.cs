@@ -103,12 +103,12 @@ namespace App.Api.Controllers
             return NoContent();
         }
 
-        //Exception deneme
-        [HttpGet("throw")]
-        public IActionResult ThrowError()
-        {
-            throw new Exception("Bu test amaçlı bir exception'dır.");
-        }
+        ////Exception deneme
+        //[HttpGet("throw")]
+        //public IActionResult ThrowError()
+        //{
+        //    throw new Exception("Bu test amaçlı bir exception'dır.");
+        //}
 
 
     }
