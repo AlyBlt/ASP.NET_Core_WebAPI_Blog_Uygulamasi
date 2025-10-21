@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
+using AutoMapper;
 
 
 namespace App.Api.Controllers
@@ -20,16 +21,19 @@ namespace App.Api.Controllers
         private readonly IValidator<ArticleCreateDto> _articleValidator;
         private readonly IValidator<ArticleUpdateDto> _articleUpdateValidator;
         private readonly ILogger<ArticlesController> _logger;
+        private readonly IMapper _mapper;
 
         public ArticlesController(IArticleService articleService,
                           IValidator<ArticleCreateDto> articleValidator,
                           IValidator<ArticleUpdateDto> articleUpdateValidator,
-                          ILogger<ArticlesController> logger)
+                          ILogger<ArticlesController> logger,
+                          IMapper mapper)
         {
             _articleService = articleService;
             _articleValidator = articleValidator;
             _articleUpdateValidator = articleUpdateValidator;
             _logger = logger;
+            _mapper = mapper;
         }
 
        
@@ -40,7 +44,11 @@ namespace App.Api.Controllers
         {
             _logger.LogInformation("Tüm makaleleri getirme isteği alındı.");
             var articles = await _articleService.GetAllAsync();
-            return Ok(articles);
+
+            // AutoMapper kullanarak Article modelinden ArticleReadDto'ya dönüştür
+            var articleDtos = _mapper.Map<IEnumerable<ArticleReadDto>>(articles);
+            return Ok(articleDtos);
+           
         }
 
         [HttpGet("{id}")]
@@ -56,7 +64,9 @@ namespace App.Api.Controllers
                 _logger.LogWarning("Id'si {Id} olan makale bulunamadı.", id);
                 return NotFound("Makale bulunamadı.");
             }
-            return Ok(article);
+            // AutoMapper kullanarak Article modelini ArticleReadDto'ya dönüştür
+            var articleDto = _mapper.Map<ArticleReadDto>(article);
+            return Ok(articleDto);
         }
 
         [HttpPost]
@@ -66,35 +76,38 @@ namespace App.Api.Controllers
         
         public async Task<IActionResult> Create([FromBody] ArticleCreateDto dto)
         {
-            // Validate the DTO
+            // Validate the DTO/Fluent Validation
             var validationResult = await _articleValidator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {
                 return BadRequest(validationResult.Errors);
             }
-            var createdArticle = await _articleService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = createdArticle.Id }, createdArticle);
 
-           
+            // Yeni makaleyi oluştur
+            var createdArticle = await _articleService.CreateAsync(dto);
+               
+            // Başarıyla oluşturulduğunda dönecek yer
+            return CreatedAtAction(nameof(GetById), new { id = createdArticle.Id }, createdArticle);
+            
         }
 
 
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
-        [ProducesResponseType(StatusCodes.Status204NoContent, Type = typeof(ArticleReadDto))]
+        [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [Consumes("application/json")]
         
         public async Task<IActionResult> Update(int id, [FromBody] ArticleUpdateDto dto)
         {
-            // FluentValidation kontrolü
+            // DTO'yu doğrula
             var validationResult = await _articleUpdateValidator.ValidateAsync(dto);
             if (!validationResult.IsValid)
             {
                 return BadRequest(validationResult.Errors);
             }
 
-            _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
+            // Veritabanındaki mevcut makaleyi al
             var existing = await _articleService.GetByIdAsync(id);
             if (existing == null)
             {
@@ -102,8 +115,17 @@ namespace App.Api.Controllers
                 return NotFound("Makale bulunamadı.");
             }
 
+            // Loglama işlemi isteğe bağlı
+            _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
+
+            
+            // Makaleyi güncelle
             await _articleService.UpdateAsync(id, dto);
-            return NoContent();
+
+            // Güncellenmiş makale verisini döndür
+            var updatedArticle = await _articleService.GetByIdAsync(id);
+            return Ok(updatedArticle); // 200 OK ve güncellenmiş veriyi döndür
+
         }
 
 

@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Hosting;
 using App.Api.Models;
+using AutoMapper;
 
 namespace App.Api.Repositories.Interfaces
 {
@@ -8,7 +9,7 @@ namespace App.Api.Repositories.Interfaces
         Task<IEnumerable<Article>> GetAllAsync();
         Task<Article> GetByIdAsync(int id);
         Task<Article> CreateAsync(Article article);
-        Task UpdateAsync(Article article);
+        Task UpdateAsync(int id, Article article);
         Task DeleteAsync(Article article);
     }
 }

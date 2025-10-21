@@ -1,4 +1,6 @@
 ﻿using App.Api.DTOs;
+using App.Api.Models;
+using AutoMapper;
 
 namespace App.Api.Services.Interfaces
 {
