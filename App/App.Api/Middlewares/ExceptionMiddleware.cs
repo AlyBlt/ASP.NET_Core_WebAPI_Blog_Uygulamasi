@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Hosting;
 
 namespace App.Api.Middlewares
 {
@@ -34,7 +35,7 @@ namespace App.Api.Middlewares
         {
             HttpStatusCode statusCode = HttpStatusCode.InternalServerError; // 500 if unexpected
 
-            string message = "Internal Server Error.";
+            string message = "Sunucu hatası oluştu.";
             string detailed = _env.IsDevelopment() ? exception.ToString() : "Bir hata oluştu.";
 
             // Örnek: Özel exception türlerini burada yakalayabiliriz

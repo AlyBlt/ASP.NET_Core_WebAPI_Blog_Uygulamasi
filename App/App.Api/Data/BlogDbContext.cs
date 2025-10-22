@@ -12,5 +12,8 @@ namespace App.Api.Data
         }
 
         public DbSet<Article> Articles { get; set; }
+
+        // Users DbSet (Yeni ekledik)
+        public DbSet<User> Users { get; set; }
     }
 }

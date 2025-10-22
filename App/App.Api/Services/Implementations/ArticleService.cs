@@ -74,9 +74,11 @@ namespace App.Api.Services.Implementations
 
             // AutoMapper ile DTO'dan Entity'ye dönüşüm/güncelleme
             _mapper.Map(dto, existing);
+            // Makale güncellenmeden önce UpdatedAt alanını UTC ile güncelle
+            existing.UpdatedAt = DateTime.UtcNow;
 
             // Veritabanındaki güncelleme işlemini Repository yapacak
-            //await _repository.UpdateAsync(id,existing);
+            await _repository.UpdateAsync(id,existing);
 
             _logger.LogInformation("Makale güncellendi. Id: {Id}", id);
         }

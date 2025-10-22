@@ -45,7 +45,8 @@ namespace App.Api.Repositories.Implementations
             // Mevcut article ile gelen article'ı güncelle
             existing.Title = article.Title;
             existing.Content = article.Content;
-            
+            existing.UpdatedAt = DateTime.UtcNow;
+
 
             _context.Articles.Update(existing);  // Update işlemi yapılacak nesne
             await _context.SaveChangesAsync();
