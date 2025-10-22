@@ -13,25 +13,26 @@ Bu proje, ASP.NET Core Web API kullanılarak geliştirilmiş basit bir **Blog Y�
 | Backend Framework   | ASP.NET Core Web API     |
 | ORM                 | Entity Framework Core    |
 | Veritabanı          | SQL Server               |
-| Kimlik Doğrulama    | JWT (JSON Web Token) _(planlanıyor)_ |
-| API Dökümantasyonu | Swagger / OpenAPI        |
-| Logging             | Serilog _(planlanıyor)_  |
-| Validasyon          | FluentValidation _(planlanıyor)_ |
-| Test                | xUnit _(planlanıyor)_     |
+| Kimlik Doğrulama    | JWT (JSON Web Token)     |
+| API Dökümantasyonu  | Swagger / OpenAPI        |
+| Logging             | Serilog                  |
+| Validasyon          | FluentValidation         |
+| Test                | xUnit _(planlanıyor)_    |
 | Versiyon Kontrolü   | Git & GitHub             |
+| Global Hata Yöntemi | Exception Handling       |
 
 ---
 
 ## ✨ Uygulama Özellikleri
 
 - Blog gönderilerini listeleme, detay görüntüleme
-- Yeni gönderi oluşturma, düzenleme, silme (planlanan auth ile)
+- Yeni gönderi oluşturma, düzenleme, silme
 - RESTful mimari yapısı
 - Entity Framework Core ile veritabanı işlemleri
 - Katmanlı mimari planlaması (Controller / Service / Repository)
-- Swagger ile API test arayüzü (planlanıyor)
-- JWT Authentication (planlanıyor)
-- Validasyon ve hata yönetimi (planlanıyor)
+- Swagger ile API test arayüzü
+- JWT Authentication
+- Validasyon ve hata yönetimi
 
 ## 🚀 Kurulum ve Çalıştırma
 
@@ -70,40 +71,56 @@ dotnet run
 Tarayıcıdan aç:
 👉 https://localhost:5001/swagger (ya da uygulamanın çalıştığı port)
 
+## 🔐 Rol Tabanlı Yetkilendirme
 
-## 📡 API Endpointleri
+| Rol   | Yetki                                                                 |
+|-------|-----------------------------------------------------------------------|
+| User  | Blogları listeleyebilir ve detaylarını görebilir.                     |
+| Author| Blog yazısı oluşturabilir, güncelleyebilir, silebilir.                |
+| Admin | Kullanıcıların rollerini değiştirebilir.                              |
 
-| HTTP Metodu | Rota                | Açıklama                      |
-|-------------|---------------------|-------------------------------|
-| GET         | /api/posts          | Tüm gönderileri getir         |
-| GET         | /api/posts/{id}     | ID ile gönderi getir          |
-| POST        | /api/posts          | Yeni gönderi oluştur _(auth)_ |
-| PUT         | /api/posts/{id}     | Gönderiyi güncelle _(auth)_   |
-| DELETE      | /api/posts/{id}     | Gönderiyi sil _(auth)_        |
+> 🛑 **Register işlemi sadece `User` rolü ile kayıt olmayı destekler.**  
+> ✅ **Admin**, kullanıcıların rollerini `"Admin"`, `"Author"` veya `"User"` olarak güncelleyebilir.
 
-> 🛑 _Authentication işlemleri ilerleyen aşamada eklenecektir._
+## 📡 API Endpointleri (Örnek)
 
-## 📁 Proje Yapısı (Planlanan)
+| HTTP Metodu | Rota                          | Açıklama                                  |
+|-------------|-------------------------------|-------------------------------------------|
+| POST        | /api/user/register            | Yeni kullanıcı kaydı _(sadece User)_      |
+| POST        | /api/user/login               | Giriş ve token alımı                      |
+| PUT         | /api/user/update-role/{id}    | Admin tarafından rol güncelleme           |
+| GET         | /api/posts                    | Tüm gönderileri getir                     |
+| GET         | /api/posts/{id}               | ID ile gönderi getir                      |
+| POST        | /api/posts                    | Yeni gönderi oluştur _(sadece Author)_    |
+| PUT         | /api/posts/{id}               | Gönderiyi güncelle _(sadece Author)_      |
+| DELETE      | /api/posts/{id}               | Gönderiyi sil _(sadece Author)_           |
+
+
+## 📁 Proje Yapısı
 
 ```text
-├── Controllers
-├── Services
-├── Repositories
-├── Models
-├── DTOs
-├── Helpers
-└── Middleware
+├── Controllers       # API uç noktalarını barındırır
+├── Data              # Veritabanı context ve seed işlemleri
+├── DTOs              # Veri transfer nesneleri (Request/Response)
+├── Helpers           # Yardımcı sınıflar ve sabitler
+├── Mappings          # AutoMapper konfigürasyonları
+├── Middlewares       # Özel hata yakalama gibi middleware'ler
+├── Migrations        # EF Core migration dosyaları
+├── Models            # Veritabanı entity sınıfları
+├── Repositories      # Veri erişim işlemleri (interface + implementation)
+├── Services          # İş mantığı katmanı
+└── Validators        # FluentValidation sınıfları
 ```
 
 ## ✅ Yol Haritası
 
-- [x] CRUD işlemleri tamamlandı  
-- [ ] Katmanlı mimariye geçiş  
-- [ ] JWT ile kimlik doğrulama  
-- [ ] Swagger entegrasyonu  
-- [ ] Logging (Serilog)  
-- [ ] FluentValidation ile input doğrulama  
-- [ ] Global Exception Handling  
+- [x] CRUD işlemleri  
+- [x] Katmanlı mimariye geçiş  
+- [x] JWT ile kimlik doğrulama  
+- [x] Swagger entegrasyonu  
+- [x] Logging (Serilog)  
+- [x] FluentValidation ile input doğrulama  
+- [x] Global Exception Handling  
 - [ ] xUnit ile test senaryoları  
 - [ ] README güncellemeleri  
 - [ ] Docker ile yayınlama _(isteğe bağlı)_  
