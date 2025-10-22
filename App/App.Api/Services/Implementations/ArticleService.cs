@@ -53,6 +53,7 @@ namespace App.Api.Services.Implementations
             // AutoMapper kullanarak ArticleCreateDto'dan Article'a dönüşüm
             var article = _mapper.Map<Article>(dto);
             article.CreatedAt = DateTime.UtcNow;
+            article.UpdatedAt = DateTime.UtcNow;
 
             var created = await _repository.CreateAsync(article);
             _logger.LogInformation("Makale oluşturuldu. Id: {Id}", created.Id);

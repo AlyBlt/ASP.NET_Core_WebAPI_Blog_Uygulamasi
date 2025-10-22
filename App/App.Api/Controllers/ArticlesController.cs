@@ -83,7 +83,7 @@ namespace App.Api.Controllers
             return Ok(articleDto);
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin,Author")]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created, Type = typeof(ArticleReadDto))]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
@@ -111,7 +111,7 @@ namespace App.Api.Controllers
             
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin,Author")]
         [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status400BadRequest, Type = typeof(string))]
         [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(ArticleReadDto))]
@@ -153,7 +153,7 @@ namespace App.Api.Controllers
 
         }
 
-        [Authorize]
+        [Authorize(Roles = "Admin,Author")]
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
