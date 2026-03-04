@@ -6,6 +6,10 @@
         public string Title { get; set; }
         public string Content { get; set; }
 
+        // Makaleyi kimin oluşturduğunu bilmek için
+        public int UserId { get; set; }
+        public string Username { get; set; } // opsiyonel, sadece göstermek için
+
         private DateTime _createdAt;
         private DateTime _updatedAt;
 

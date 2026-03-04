@@ -32,6 +32,7 @@ namespace Blog.Infrastructure.Repositories
 
         public async Task UpdateAsync(UserEntity user)
         {
+            if (user == null) throw new ArgumentNullException(nameof(user));
             _context.Users.Update(user);
             await _context.SaveChangesAsync();
         }

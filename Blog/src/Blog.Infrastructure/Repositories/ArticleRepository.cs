@@ -33,12 +33,12 @@ namespace Blog.Infrastructure.Repositories
             return article;
         }
                                              
-        public async Task UpdateAsync(int id, ArticleEntity article)
+        public async Task UpdateAsync(ArticleEntity article)
         {
-            var existing = await _context.Articles.FindAsync(id);
+            var existing = await _context.Articles.FindAsync(article.Id);
             if (existing == null)
             {
-                throw new ArgumentException("Makale bulunamadı.", nameof(id));
+                throw new ArgumentException("Makale bulunamadı.", nameof(article.Id));
             }
 
             // Mevcut article ile gelen article'ı güncelle

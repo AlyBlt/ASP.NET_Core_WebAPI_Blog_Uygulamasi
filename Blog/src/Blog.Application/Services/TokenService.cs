@@ -16,11 +16,17 @@ namespace Blog.Application.Services
             _configuration = configuration;
         }
 
-        public string GenerateJwtToken(string username, string role)
+        public string GenerateJwtToken(string username, string role, int userId)
         {
+            if (string.IsNullOrEmpty(username))
+                throw new ArgumentException("Username cannot be null or empty");
+            if (string.IsNullOrEmpty(role))
+                role = "User"; // default role
+
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, username),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
                 new Claim(ClaimTypes.Role, role)
             };
 

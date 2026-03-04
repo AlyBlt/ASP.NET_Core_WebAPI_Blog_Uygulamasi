@@ -8,7 +8,7 @@ namespace Blog.Application.Interfaces.Repositories
         Task<IEnumerable<ArticleEntity>> GetAllAsync();
         Task<ArticleEntity> GetByIdAsync(int id);
         Task<ArticleEntity> CreateAsync(ArticleEntity article);
-        Task UpdateAsync(int id, ArticleEntity article);
+        Task UpdateAsync(ArticleEntity article);
         Task DeleteAsync(ArticleEntity article);
     }
 }
