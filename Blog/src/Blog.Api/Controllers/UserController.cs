@@ -1,11 +1,7 @@
 ﻿using Blog.Application.DTOs;
 using Blog.Application.Helpers;
-using Blog.Application.Interfaces.Repositories;
 using Blog.Application.Interfaces.Services;
-using Blog.Domain.Entities;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 
@@ -15,52 +11,54 @@ namespace Blog.Api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IPasswordHasher<UserEntity> _passwordHasher;  // IPasswordHasher<User> sınıfını DI ile alıyoruz
         private readonly IUserService _userService;  // IUserService sınıfını DI ile alıyoruz
-        private readonly IConfiguration _configuration;
         private readonly ITokenService _tokenService;  // TokenService'i DI ile alıyoruz
-        public UserController(IUserRepository userRepository, IPasswordHasher<UserEntity> passwordHasher, IUserService userService,
-                              IConfiguration configuration, ITokenService tokenService)
+        public UserController(IUserService userService, ITokenService tokenService)
         {
-            _userRepository = userRepository;
-            _passwordHasher = passwordHasher;
             _userService = userService;
-            _configuration = configuration;
             _tokenService = tokenService;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            // Şifreyi hash'le
-            var passwordHash = _passwordHasher.HashPassword(null, registerDto.Password); // `null` çünkü User nesnesi yeni oluşturulacak
+            if (string.IsNullOrWhiteSpace(registerDto.Username) || string.IsNullOrWhiteSpace(registerDto.Password))
+                return BadRequest(new { message = "Username ve Password zorunludur." });
 
-            // Yeni kullanıcıyı oluştur
-            // Kullanıcı rolünü sabit "User" yap
-            var username = registerDto.Username.CapitalizeFirstLetter();
-            var user = new UserEntity(username, passwordHash, registerDto.Email, "User");
-            
-            // Kullanıcıyı veritabanına ekle
-            await _userRepository.AddAsync(user);
+            // Servis üzerinden kayıt işlemi yapılacak
+            var createdUser = await _userService.RegisterUserAsync(registerDto);
+            if (createdUser == null)
+                return BadRequest(new { message = "Kullanıcı oluşturulamadı." });
 
-            return Ok(new { message = "Kullanıcı başarıyla kaydedildi." });
+            return Ok(new
+            {
+                message = "Kullanıcı başarıyla kaydedildi.",
+                user = createdUser // UserReadDto dönecek
+            });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            var username=loginDto.Username.CapitalizeFirstLetter();
+            if (string.IsNullOrWhiteSpace(loginDto.Username) || string.IsNullOrWhiteSpace(loginDto.Password))
+                return BadRequest(new { message = "Username ve Password zorunludur." });
+
+            // Servis üzerinden authentication
+            var username = loginDto.Username.Trim().ToLower();
             var user = await _userService.AuthenticateUserAsync(username, loginDto.Password);
-
             if (user == null)
-            {
                 return Unauthorized(new { message = "Geçersiz kullanıcı adı veya şifre." });
-            }
-            // Token'ı oluştur
-            var token = _tokenService.GenerateJwtToken(user.Username, user.Role ?? "User");
 
-            return Ok(new { Token = token });
+            // Null-safe role
+            var role = string.IsNullOrWhiteSpace(user.Role) ? Roles.User : user.Role;
+
+            // Token'ı oluştur
+            var token = _tokenService.GenerateJwtToken(user.Username, role, user.Id);
+            return Ok(new
+            {
+                token,
+                user // UserReadDto dönecek
+            });
         }
 
         [Authorize(Roles = "Admin")]
@@ -72,20 +70,20 @@ namespace Blog.Api.Controllers
                 return BadRequest(new { message = "Rol boş bırakılamaz." });
             }
             newRole = newRole.CapitalizeFirstLetter();
-
-            if (newRole != Roles.Admin && newRole != Roles.Author && newRole != Roles.User)
-            {
+            var allowedRoles = new[] { "Admin", "Author", "User" };
+            if (!allowedRoles.Contains(newRole))
                 return BadRequest(new { message = "Geçersiz rol." });
-            }
 
-            var user = await _userRepository.GetByIdAsync(userId);
-            if (user == null)
+            var updatedUser = await _userService.UpdateUserRoleAsync(userId, newRole);
+            if (updatedUser == null)
                 return NotFound(new { message = "Kullanıcı bulunamadı." });
 
-            user.Role = newRole;
-            await _userRepository.UpdateAsync(user);
+            return Ok(new
+            {
+                message = "Kullanıcının rolü güncellendi.",
+                user = updatedUser // UserReadDto dönecek
+            });
 
-            return Ok(new { message = "Kullanıcının rolü güncellendi." });
         }
     }
 }

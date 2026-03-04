@@ -19,7 +19,7 @@ using Microsoft.OpenApi.Models;
 var builder = WebApplication.CreateBuilder(args);
 // Configuration dosyasýný alýyoruz
 var configuration = builder.Configuration;
-builder.Services.AddAutoMapper(typeof(MappingProfile));
+
 
 // Configuration'ý DI container'ýna ekliyoruz
 builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
@@ -27,15 +27,20 @@ builder.Services.AddSingleton<IConfiguration>(builder.Configuration);
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
+        var secretKey = configuration["JWTSettings:SecretKey"];
+
+        if (string.IsNullOrEmpty(secretKey))
+            throw new Exception("JWT SecretKey is missing in configuration!");
+
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = false,
-            ValidateAudience = false,
+            ValidateIssuer = true,
+            ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["JWTSettings:Issuer"], // JWT Issuer'ý alýyoruz
             ValidAudience = builder.Configuration["JWTSettings:Audience"], // JWT Audience'ý alýyoruz
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWTSettings:SecretKey"])), // SecretKey'i alýyoruz
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey)), // SecretKey'i alýyoruz
             ClockSkew = TimeSpan.Zero // Token'ýn geçerliliði için toleransý sýfýrlýyoruz
         };
     });
@@ -144,5 +149,11 @@ app.UseAuthentication();  // Bu satýr, JWT doðrulamasý yapacak
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<BlogDbContext>();
+    await SeedData.SeedAsync(context);
+}
 
 app.Run();

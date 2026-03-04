@@ -11,6 +11,9 @@ namespace Blog.Domain.Entities
         public string Role { get; set; }  // Kullanıcı rolü (örneğin, "Admin", "User" vb.)
         public DateTime CreatedAt { get; set; }  // Hesap oluşturulma tarihi
 
+        // Navigation Property → Article'lar
+        public ICollection<ArticleEntity> Articles { get; set; } = new List<ArticleEntity>();
+
         // Constructor, şifre hash'lenmiş olarak alınır
         public UserEntity(string username, string passwordHash, string email, string role)
         {

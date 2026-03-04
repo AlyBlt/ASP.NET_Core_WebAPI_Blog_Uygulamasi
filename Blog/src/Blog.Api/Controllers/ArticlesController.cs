@@ -1,12 +1,8 @@
-﻿using Blog.Application.Helpers;
-using Blog.Application.DTOs;
+﻿using Blog.Application.DTOs;
 using Blog.Application.Interfaces.Services;
-using Blog.Application.Interfaces.Repositories;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
 using FluentValidation;
-using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Blog.Api.Controllers
 {
@@ -18,20 +14,18 @@ namespace Blog.Api.Controllers
         private readonly IValidator<ArticleCreateDto> _articleValidator;
         private readonly IValidator<ArticleUpdateDto> _articleUpdateValidator;
         private readonly ILogger<ArticlesController> _logger;
-        private readonly IMapper _mapper;
-        private readonly IUserRepository _userRepository;
+        private readonly IUserService _userService;
         public ArticlesController(IArticleService articleService,
                           IValidator<ArticleCreateDto> articleValidator,
                           IValidator<ArticleUpdateDto> articleUpdateValidator,
                           ILogger<ArticlesController> logger,
-                          IMapper mapper, IUserRepository userRepository)
+                          IUserService userService)
         {
             _articleService = articleService;
             _articleValidator = articleValidator;
             _articleUpdateValidator = articleUpdateValidator;
             _logger = logger;
-            _mapper = mapper;
-            _userRepository = userRepository;
+            _userService = userService;
         }
 
         [Authorize]  // Bu action sadece authenticated kullanıcılar için geçerli
@@ -40,17 +34,15 @@ namespace Blog.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)] // Yetkisiz erişim için
         public async Task<IActionResult> GetAll()
         {
-            var user = await UserHelper.GetCurrentUserAsync(HttpContext, _userRepository);
+            var user = await _userService.GetCurrentUserAsync(HttpContext);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
             _logger.LogInformation("Tüm makaleleri getirme isteği alındı.");
             var articles = await _articleService.GetAllAsync();
 
-            // AutoMapper kullanarak Article modelinden ArticleReadDto'ya dönüştür
-            var articleDtos = _mapper.Map<IEnumerable<ArticleReadDto>>(articles);
-            return Ok(articleDtos);
-           
+            return Ok(articles); // DTO zaten service'ten geliyor
+
         }
 
         [Authorize]  // Bu action sadece authenticated kullanıcılar için geçerli
@@ -60,7 +52,7 @@ namespace Blog.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)] // Yetkisiz erişim için
         public async Task<IActionResult> GetById(int id)
         {
-            var user = await UserHelper.GetCurrentUserAsync(HttpContext, _userRepository);
+            var user = await _userService.GetCurrentUserAsync(HttpContext);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -71,9 +63,8 @@ namespace Blog.Api.Controllers
                 _logger.LogWarning("Id'si {Id} olan makale bulunamadı.", id);
                 return NotFound("Makale bulunamadı.");
             }
-            // AutoMapper kullanarak Article modelini ArticleReadDto'ya dönüştür
-            var articleDto = _mapper.Map<ArticleReadDto>(article);
-            return Ok(articleDto);
+           
+            return Ok(article);
         }
 
         [Authorize(Roles = "Admin,Author")]
@@ -85,7 +76,7 @@ namespace Blog.Api.Controllers
         
         public async Task<IActionResult> Create([FromBody] ArticleCreateDto dto)
         {
-            var user = await UserHelper.GetCurrentUserAsync(HttpContext, _userRepository);
+            var user = await _userService.GetCurrentUserAsync(HttpContext);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -97,7 +88,7 @@ namespace Blog.Api.Controllers
             }
 
             // Yeni makaleyi oluştur
-            var createdArticle = await _articleService.CreateAsync(dto);
+            var createdArticle = await _articleService.CreateAsync(dto, user.Id);
                
             // Başarıyla oluşturulduğunda dönecek yer
             return CreatedAtAction(nameof(GetById), new { id = createdArticle.Id }, createdArticle);
@@ -114,7 +105,7 @@ namespace Blog.Api.Controllers
         
         public async Task<IActionResult> Update(int id, [FromBody] ArticleUpdateDto dto)
         {
-            var user = await UserHelper.GetCurrentUserAsync(HttpContext, _userRepository);
+            var user = await _userService.GetCurrentUserAsync(HttpContext);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -141,8 +132,9 @@ namespace Blog.Api.Controllers
             await _articleService.UpdateAsync(id, dto);
 
             // Güncellenmiş makale verisini döndür
-            var updatedArticle = await _articleService.GetByIdAsync(id);
-            return Ok(updatedArticle); // 200 OK ve güncellenmiş veriyi döndür
+            var updatedArticle = await _articleService.UpdateAsync(id, dto);
+            if (updatedArticle == null) return NotFound("Makale bulunamadı.");
+            return Ok(updatedArticle);
 
         }
 
@@ -153,7 +145,7 @@ namespace Blog.Api.Controllers
        
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await UserHelper.GetCurrentUserAsync(HttpContext, _userRepository);
+            var user = await _userService.GetCurrentUserAsync(HttpContext);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -164,6 +156,11 @@ namespace Blog.Api.Controllers
                 _logger.LogWarning("Silme işlemi başarısız. Id {Id} bulunamadı.", id);
                 return NotFound("Makale bulunamadı.");
             }
+
+            // Author sadece kendi makalesini silebilir
+            if (user.Role == "Author" && existing.UserId != user.Id)
+                return Forbid();
+
             await _articleService.DeleteAsync(id);
             return NoContent();
         }

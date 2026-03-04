@@ -13,8 +13,10 @@ namespace Blog.Application.Mappings
            CreateMap<ArticleEntity, ArticleReadDto>();
            CreateMap<ArticleCreateDto, ArticleEntity>();
            CreateMap<ArticleUpdateDto, ArticleEntity>();
-           CreateMap<ArticleEntity, ArticleUpdateDto>();
-           CreateMap<ArticleReadDto, ArticleEntity>();
+           CreateMap<UserEntity, UserReadDto>();
+           CreateMap<ArticleEntity, ArticleReadDto>()
+             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
+             .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User.Username));
 
 
         }

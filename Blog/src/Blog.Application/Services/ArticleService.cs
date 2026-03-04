@@ -46,7 +46,7 @@ namespace Blog.Application.Services
             return _mapper.Map<ArticleReadDto>(article);
         }
 
-        public async Task<ArticleReadDto> CreateAsync(ArticleCreateDto dto)
+        public async Task<ArticleReadDto> CreateAsync(ArticleCreateDto dto, int authorId)
         {
             _logger.LogInformation("Yeni makale oluşturuluyor: {@Dto}", dto);
 
@@ -54,6 +54,7 @@ namespace Blog.Application.Services
             var article = _mapper.Map<ArticleEntity>(dto);
             article.CreatedAt = DateTime.UtcNow;
             article.UpdatedAt = DateTime.UtcNow;
+            article.UserId = authorId; // Author ilişkilendirmesi
 
             var created = await _repository.CreateAsync(article);
             _logger.LogInformation("Makale oluşturuldu. Id: {Id}", created.Id);
@@ -62,7 +63,7 @@ namespace Blog.Application.Services
             return _mapper.Map<ArticleReadDto>(created);
         }
 
-        public async Task UpdateAsync(int id, ArticleUpdateDto dto)
+        public async Task<ArticleReadDto> UpdateAsync(int id, ArticleUpdateDto dto)
         {
             _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
 
@@ -70,7 +71,7 @@ namespace Blog.Application.Services
             if (existing == null)
             {
                 _logger.LogWarning("Güncelleme başarısız. Id {Id} bulunamadı.", id);
-                return;
+                return null;
             }
 
             // AutoMapper ile DTO'dan Entity'ye dönüşüm/güncelleme
@@ -79,22 +80,19 @@ namespace Blog.Application.Services
             existing.UpdatedAt = DateTime.UtcNow;
 
             // Veritabanındaki güncelleme işlemini Repository yapacak
-            await _repository.UpdateAsync(id,existing);
-
+            await _repository.UpdateAsync(existing);
             _logger.LogInformation("Makale güncellendi. Id: {Id}", id);
+            return _mapper.Map<ArticleReadDto>(existing);
         }
 
-        public async Task DeleteAsync(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
             _logger.LogInformation("Id'si {Id} olan makale silinmek isteniyor.", id);
-            var article = await _repository.GetByIdAsync(id);
-            if (article == null)
-            {
-                _logger.LogWarning("Silme başarısız. Id {Id} bulunamadı.", id);
-                return;
-            }
+            var existing = await _repository.GetByIdAsync(id);
+            if (existing == null) return false;
 
-            await _repository.DeleteAsync(article);
+            await _repository.DeleteAsync(existing);
+            return true;
             _logger.LogInformation("Makale silindi. Id: {Id}", id);
 
         }
