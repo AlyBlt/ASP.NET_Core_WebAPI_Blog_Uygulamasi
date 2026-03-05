@@ -1,7 +1,9 @@
-﻿namespace Blog.Application.Interfaces.Services
+﻿using Blog.Domain.Enums;
+
+namespace Blog.Application.Interfaces.Services
 {
     public interface ITokenService
     {
-        string GenerateJwtToken(string username, string role, int userId);
+        string GenerateJwtToken(string username, UserRole role, int userId);
     }
 }

@@ -3,14 +3,13 @@ using Blog.Application.DTOs;
 using Blog.Application.Interfaces.Repositories;
 using Blog.Application.Interfaces.Services;
 using Blog.Domain.Entities;
-using Microsoft.AspNetCore.Http;
+using Blog.Domain.Enums;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 
-
 namespace Blog.Application.Services
 {
-    public class UserService : IUserService // IUserService implement edildi
+    public class UserService : IUserService
     {
         private readonly IUserRepository _userRepository;
         private readonly IPasswordHasher<UserEntity> _passwordHasher;
@@ -23,16 +22,15 @@ namespace Blog.Application.Services
             _mapper = mapper;
         }
 
-        public async Task<UserReadDto> AuthenticateUserAsync(string username, string password)
+        public async Task<UserReadDto?> AuthenticateUserAsync(string username, string password)
         {
             if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                 return null;
+
             var normalizedUsername = username.Trim().ToLower();
             var user = await _userRepository.GetByUsernameAsync(normalizedUsername);
             if (user == null)
-            {
-                return null; // Kullanıcı bulunamadı
-            }
+                return null;
 
             var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
             return result == PasswordVerificationResult.Success ? _mapper.Map<UserReadDto>(user) : null;
@@ -40,21 +38,20 @@ namespace Blog.Application.Services
 
         public async Task<UserReadDto> RegisterUserAsync(RegisterDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
-                return null;
+            if (dto == null)
+                throw new ArgumentNullException(nameof(dto));
 
-            var userName = dto.Username.Trim().ToLower();
-            // Şifreyi hash'lemek için önce user nesnesi oluşturulmalı
-            var user = new UserEntity(userName, string.Empty, dto.Email, "User"); //Placeholder role, email burada gerçek değer olacak
+            var userName = dto.UserName.Trim().ToLower();
+            var email = dto.Email.Trim().ToLower();
 
-            // Şifreyi hash'le ve User nesnesine ekle
+            var user = new UserEntity(userName, string.Empty, email, UserRole.User);
             user.PasswordHash = _passwordHasher.HashPassword(user, dto.Password);
 
-            await _userRepository.AddAsync(user); // Veritabanına ekleyelim
+            await _userRepository.AddAsync(user);
             return _mapper.Map<UserReadDto>(user);
         }
 
-        public async Task<UserReadDto> UpdateUserRoleAsync(int userId, string newRole)
+        public async Task<UserReadDto?> UpdateUserRoleAsync(int userId, UserRole newRole)
         {
             var user = await _userRepository.GetByIdAsync(userId);
             if (user == null) return null;
@@ -65,9 +62,9 @@ namespace Blog.Application.Services
             return _mapper.Map<UserReadDto>(user);
         }
 
-        public async Task<UserReadDto> GetCurrentUserAsync(HttpContext httpContext)
+        public async Task<UserReadDto?> GetCurrentUserAsync(ClaimsPrincipal claimsPrincipal)
         {
-            var username = httpContext.User?.FindFirstValue(ClaimTypes.Name);
+            var username = claimsPrincipal?.FindFirstValue(ClaimTypes.Name);
             if (string.IsNullOrEmpty(username))
                 return null;
 

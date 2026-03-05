@@ -11,39 +11,20 @@ namespace Blog.Infrastructure.Data
         {
         }
 
-        public DbSet<ArticleEntity> Articles { get; set; }
-        public DbSet<UserEntity> Users { get; set; }
+        public DbSet<UserEntity> Users => Set<UserEntity>();
+        public DbSet<ArticleEntity> Articles => Set<ArticleEntity>();
+        public DbSet<CategoryEntity> Categories => Set<CategoryEntity>();
+        public DbSet<TagEntity> Tags => Set<TagEntity>();
+        public DbSet<CommentEntity> Comments => Set<CommentEntity>();
+        public DbSet<ArticleTagEntity> ArticleTags => Set<ArticleTagEntity>();
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // User-Article ilişkisi
-            modelBuilder.Entity<ArticleEntity>()
-                .HasOne(a => a.User)
-                .WithMany(u => u.Articles) // 1 Author → N Article
-                .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.Cascade); // Author silinirse makaleleri de silinir
-
-            // Property ayarları
-            modelBuilder.Entity<ArticleEntity>()
-                .Property(a => a.Title)
-                .IsRequired()
-                .HasMaxLength(250);
-
-            modelBuilder.Entity<ArticleEntity>()
-                .Property(a => a.Content)
-                .IsRequired();
-
-            modelBuilder.Entity<UserEntity>()
-                .Property(u => u.Username)
-                .IsRequired()
-                .HasMaxLength(50);
-
-            modelBuilder.Entity<UserEntity>()
-                .Property(u => u.Email)
-                .IsRequired()
-                .HasMaxLength(100);
+            // Tüm configuration classlarını otomatik yükler
+            modelBuilder.ApplyConfigurationsFromAssembly(typeof(BlogDbContext).Assembly);
         }
     }
 }

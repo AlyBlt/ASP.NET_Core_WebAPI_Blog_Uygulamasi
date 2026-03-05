@@ -1,29 +1,27 @@
-﻿namespace Blog.Application.DTOs
+﻿using Blog.Domain.Enums;
+using System.Text.Json.Serialization;
+
+namespace Blog.Application.DTOs
 {
     public class ArticleReadDto
     {
         public int Id { get; set; }
-        public string Title { get; set; }
-        public string Content { get; set; }
+        public string Title { get; set; } = default!;
+        public string Slug { get; set; } = default!;
+        public string Content { get; set; } = default!;
+        public int ViewCount { get; set; }
 
-        // Makaleyi kimin oluşturduğunu bilmek için
-        public int UserId { get; set; }
-        public string Username { get; set; } // opsiyonel, sadece göstermek için
-
-        private DateTime _createdAt;
-        private DateTime _updatedAt;
-
-        public DateTime CreatedAt
-        {
-            get => _createdAt.ToLocalTime();
-            set => _createdAt = value;
-        }
-
-        public DateTime UpdatedAt
-        {
-            get => _updatedAt.ToLocalTime();
-            set => _updatedAt = value;
-        }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ArticleStatus Status { get; set; }
+        // Author
+        public int AuthorId { get; set; }
+        public string AuthorName { get; set; } = default!;
+        // Category
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = default!;
+       
+        public DateTime CreatedAt { get; set; }
+        public DateTime UpdatedAt { get; set; }
 
     }
 }

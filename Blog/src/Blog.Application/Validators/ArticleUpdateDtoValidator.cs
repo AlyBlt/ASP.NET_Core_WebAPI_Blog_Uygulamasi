@@ -8,12 +8,19 @@ namespace Blog.Application.Validators
         public ArticleUpdateDtoValidator()
         {
             RuleFor(x => x.Title)
-                 .NotEmpty().WithMessage("Başlık boş olamaz.")
-                 .Length(5, 100).WithMessage("Başlık 5 ile 100 karakter arasında olmalıdır.");
+                .NotEmpty().WithMessage("Başlık boş olamaz.")
+                .MinimumLength(5).WithMessage("Başlık en az 5 karakter olmalı.")
+                .MaximumLength(250).WithMessage("Başlık 250 karakteri geçemez.")
+                .Must(x => !string.IsNullOrWhiteSpace(x)).WithMessage("Başlık sadece boşluk olamaz.");
 
             RuleFor(x => x.Content)
                 .NotEmpty().WithMessage("İçerik boş olamaz.")
-                .Length(10, 500).WithMessage("İçerik 10 ile 500 karakter arasında olmalıdır.");
+                .MinimumLength(10).WithMessage("İçerik en az 10 karakter olmalı.")
+                .MaximumLength(5000).WithMessage("İçerik 5000 karakteri geçemez.")
+                .Must(x => !string.IsNullOrWhiteSpace(x)).WithMessage("İçerik sadece boşluk olamaz.");
+
+            RuleFor(x => x.Status)
+                .IsInEnum().WithMessage("Geçersiz makale durumu.");
         }
 
     }

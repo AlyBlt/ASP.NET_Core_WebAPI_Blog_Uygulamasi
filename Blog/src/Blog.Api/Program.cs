@@ -53,7 +53,7 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddFluentValidationAutoValidation(); // Middleware için
 builder.Services.AddFluentValidationClientsideAdapters(); // Opsiyonel, Swagger / UI tarafý için
-builder.Services.AddValidatorsFromAssemblyContaining<ArticleValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ArticleCreateValidator>();
 
 builder.Services.AddDbContext<BlogDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

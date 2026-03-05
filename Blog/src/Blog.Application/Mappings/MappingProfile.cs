@@ -6,21 +6,43 @@ namespace Blog.Application.Mappings
 {
     public class MappingProfile : Profile
     {
-        
         public MappingProfile()
         {
-          // Article -> ArticleReadDto dönüşümü
-           CreateMap<ArticleEntity, ArticleReadDto>();
-           CreateMap<ArticleCreateDto, ArticleEntity>();
-           CreateMap<ArticleUpdateDto, ArticleEntity>();
-           CreateMap<UserEntity, UserReadDto>();
-           CreateMap<ArticleEntity, ArticleReadDto>()
-             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.UserId))
-             .ForMember(dest => dest.Username, opt => opt.MapFrom(src => src.User.Username));
+            // Article -> ArticleReadDto
+            CreateMap<ArticleEntity, ArticleReadDto>()
+                .ForMember(dest => dest.AuthorId, opt => opt.MapFrom(src => src.AuthorId))
+                .ForMember(dest => dest.AuthorName, opt => opt.MapFrom(src => src.Author.UserName))
+                .ForMember(dest => dest.CategoryName, opt => opt.MapFrom(src => src.Category.Name));
 
+            // ArticleCreateDto -> ArticleEntity
+            CreateMap<ArticleCreateDto, ArticleEntity>();
 
+            // ArticleUpdateDto -> ArticleEntity
+            CreateMap<ArticleUpdateDto, ArticleEntity>();
+
+            // UserEntity -> UserReadDto
+            CreateMap<UserEntity, UserReadDto>();
+
+            // ------------------- Comment Mapping -------------------
+            CreateMap<CommentEntity, CommentReadDto>()
+                .ForMember(dest => dest.UserName, opt => opt.MapFrom(src => src.User.UserName));
+
+            CreateMap<CommentCreateDto, CommentEntity>();
+            CreateMap<CommentUpdateDto, CommentEntity>();
+
+            // ------------------- Category Mapping -------------------
+            CreateMap<CategoryEntity, CategoryReadDto>();
+            CreateMap<CategoryCreateDto, CategoryEntity>();
+            CreateMap<CategoryUpdateDto, CategoryEntity>();
+
+            // TagEntity <-> TagReadDto
+            CreateMap<TagEntity, TagReadDto>();
+
+            // TagCreateDto -> TagEntity
+            CreateMap<TagCreateDto, TagEntity>();
+
+            // TagUpdateDto -> TagEntity
+            CreateMap<TagUpdateDto, TagEntity>();
         }
     }
 }
-
-
