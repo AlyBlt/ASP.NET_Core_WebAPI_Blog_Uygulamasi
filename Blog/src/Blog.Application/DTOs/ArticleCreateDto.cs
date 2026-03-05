@@ -1,15 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Blog.Domain.Enums;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Blog.Application.DTOs
 {
     public class ArticleCreateDto
     {
-        [Required]
-        [StringLength(100, MinimumLength = 5, ErrorMessage = "Başlık 5-100 karakter arasında olmalıdır..")]
-        public string Title { get; set; }
+        public string Title { get; set; } = default!;
+        public string Content { get; set; } = default!;
+        public int CategoryId { get; set; }
+        public List<int> TagIds { get; set; } = new List<int>();
 
-        [Required]
-        [StringLength(500, MinimumLength = 10, ErrorMessage = "İçerik 10-500 karakter arasında olmalıdır..")]
-        public string Content { get; set; }
+        [JsonConverter(typeof(JsonStringEnumConverter))]
+        public ArticleStatus Status { get; set; } = ArticleStatus.Draft;
     }
 }

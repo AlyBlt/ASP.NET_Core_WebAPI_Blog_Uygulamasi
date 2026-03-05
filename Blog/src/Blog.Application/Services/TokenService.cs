@@ -1,4 +1,5 @@
 ﻿using Blog.Application.Interfaces.Services;
+using Blog.Domain.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -16,18 +17,16 @@ namespace Blog.Application.Services
             _configuration = configuration;
         }
 
-        public string GenerateJwtToken(string username, string role, int userId)
+        public string GenerateJwtToken(string username, UserRole role, int userId)
         {
             if (string.IsNullOrEmpty(username))
                 throw new ArgumentException("Username cannot be null or empty");
-            if (string.IsNullOrEmpty(role))
-                role = "User"; // default role
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Name, username),
-                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-                new Claim(ClaimTypes.Role, role)
+              new Claim(ClaimTypes.Name, username),
+              new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+              new Claim(ClaimTypes.Role, role.ToString())  // enum -> string
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWTSettings:SecretKey"]));

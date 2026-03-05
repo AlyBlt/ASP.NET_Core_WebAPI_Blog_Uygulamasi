@@ -1,9 +1,8 @@
 ﻿using Blog.Application.DTOs;
-using Blog.Application.Helpers;
 using Blog.Application.Interfaces.Services;
+using Blog.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-
 
 namespace Blog.Api.Controllers
 {
@@ -11,8 +10,9 @@ namespace Blog.Api.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserService _userService;  // IUserService sınıfını DI ile alıyoruz
-        private readonly ITokenService _tokenService;  // TokenService'i DI ile alıyoruz
+        private readonly IUserService _userService;
+        private readonly ITokenService _tokenService;
+
         public UserController(IUserService userService, ITokenService tokenService)
         {
             _userService = userService;
@@ -22,10 +22,9 @@ namespace Blog.Api.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
         {
-            if (string.IsNullOrWhiteSpace(registerDto.Username) || string.IsNullOrWhiteSpace(registerDto.Password))
+            if (string.IsNullOrWhiteSpace(registerDto.UserName) || string.IsNullOrWhiteSpace(registerDto.Password))
                 return BadRequest(new { message = "Username ve Password zorunludur." });
 
-            // Servis üzerinden kayıt işlemi yapılacak
             var createdUser = await _userService.RegisterUserAsync(registerDto);
             if (createdUser == null)
                 return BadRequest(new { message = "Kullanıcı oluşturulamadı." });
@@ -33,31 +32,28 @@ namespace Blog.Api.Controllers
             return Ok(new
             {
                 message = "Kullanıcı başarıyla kaydedildi.",
-                user = createdUser // UserReadDto dönecek
+                user = createdUser
             });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
-            if (string.IsNullOrWhiteSpace(loginDto.Username) || string.IsNullOrWhiteSpace(loginDto.Password))
+            if (string.IsNullOrWhiteSpace(loginDto.UserName) || string.IsNullOrWhiteSpace(loginDto.Password))
                 return BadRequest(new { message = "Username ve Password zorunludur." });
 
-            // Servis üzerinden authentication
-            var username = loginDto.Username.Trim().ToLower();
+            var username = loginDto.UserName.Trim().ToLower();
             var user = await _userService.AuthenticateUserAsync(username, loginDto.Password);
             if (user == null)
                 return Unauthorized(new { message = "Geçersiz kullanıcı adı veya şifre." });
 
-            // Null-safe role
-            var role = string.IsNullOrWhiteSpace(user.Role) ? Roles.User : user.Role;
+            // Role artık enum, null-safe kontrol gerekmez
+            var token = _tokenService.GenerateJwtToken(user.UserName, user.Role, user.Id);
 
-            // Token'ı oluştur
-            var token = _tokenService.GenerateJwtToken(user.Username, role, user.Id);
             return Ok(new
             {
                 token,
-                user // UserReadDto dönecek
+                user
             });
         }
 
@@ -65,25 +61,22 @@ namespace Blog.Api.Controllers
         [HttpPut("update-role/{userId}")]
         public async Task<IActionResult> UpdateUserRole(int userId, [FromBody] string newRole)
         {
-            if (string.IsNullOrEmpty(newRole))
-            {
+            if (string.IsNullOrWhiteSpace(newRole))
                 return BadRequest(new { message = "Rol boş bırakılamaz." });
-            }
-            newRole = newRole.CapitalizeFirstLetter();
-            var allowedRoles = new[] { "Admin", "Author", "User" };
-            if (!allowedRoles.Contains(newRole))
+
+            // Enum parsing
+            if (!Enum.TryParse<UserRole>(newRole, true, out var roleEnum))
                 return BadRequest(new { message = "Geçersiz rol." });
 
-            var updatedUser = await _userService.UpdateUserRoleAsync(userId, newRole);
+            var updatedUser = await _userService.UpdateUserRoleAsync(userId, roleEnum);
             if (updatedUser == null)
                 return NotFound(new { message = "Kullanıcı bulunamadı." });
 
             return Ok(new
             {
                 message = "Kullanıcının rolü güncellendi.",
-                user = updatedUser // UserReadDto dönecek
+                user = updatedUser
             });
-
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Blog.Application.DTOs;
 using Blog.Application.Interfaces.Services;
+using Blog.Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +35,7 @@ namespace Blog.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)] // Yetkisiz erişim için
         public async Task<IActionResult> GetAll()
         {
-            var user = await _userService.GetCurrentUserAsync(HttpContext);
+            var user = await _userService.GetCurrentUserAsync(User); // User -> ClaimsPrincipal
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -52,7 +53,7 @@ namespace Blog.Api.Controllers
         [ProducesResponseType(StatusCodes.Status401Unauthorized)] // Yetkisiz erişim için
         public async Task<IActionResult> GetById(int id)
         {
-            var user = await _userService.GetCurrentUserAsync(HttpContext);
+            var user = await _userService.GetCurrentUserAsync(User);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -76,7 +77,7 @@ namespace Blog.Api.Controllers
         
         public async Task<IActionResult> Create([FromBody] ArticleCreateDto dto)
         {
-            var user = await _userService.GetCurrentUserAsync(HttpContext);
+            var user = await _userService.GetCurrentUserAsync(User);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -105,7 +106,7 @@ namespace Blog.Api.Controllers
         
         public async Task<IActionResult> Update(int id, [FromBody] ArticleUpdateDto dto)
         {
-            var user = await _userService.GetCurrentUserAsync(HttpContext);
+            var user = await _userService.GetCurrentUserAsync(User);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -127,10 +128,11 @@ namespace Blog.Api.Controllers
             // Loglama işlemi isteğe bağlı
             _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
 
-            
-            // Makaleyi güncelle
-            await _articleService.UpdateAsync(id, dto);
+            // Author sadece kendi makalesini güncelleyebilir
+            if (user.Role == UserRole.Author && existing.AuthorId != user.Id)
+                return Forbid();
 
+           
             // Güncellenmiş makale verisini döndür
             var updatedArticle = await _articleService.UpdateAsync(id, dto);
             if (updatedArticle == null) return NotFound("Makale bulunamadı.");
@@ -145,7 +147,7 @@ namespace Blog.Api.Controllers
        
         public async Task<IActionResult> Delete(int id)
         {
-            var user = await _userService.GetCurrentUserAsync(HttpContext);
+            var user = await _userService.GetCurrentUserAsync(User);
             if (user == null)
                 return Unauthorized("Geçersiz kullanıcı.");
 
@@ -158,20 +160,12 @@ namespace Blog.Api.Controllers
             }
 
             // Author sadece kendi makalesini silebilir
-            if (user.Role == "Author" && existing.UserId != user.Id)
+            if (user.Role == UserRole.Author && existing.AuthorId != user.Id)
                 return Forbid();
 
             await _articleService.DeleteAsync(id);
             return NoContent();
         }
-
-        ////Exception deneme
-        //[HttpGet("throw")]
-        //public IActionResult ThrowError()
-        //{
-        //    throw new Exception("Bu test amaçlı bir exception'dır.");
-        //}
-
 
     }
 }

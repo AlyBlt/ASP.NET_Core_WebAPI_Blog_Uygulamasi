@@ -25,14 +25,12 @@ namespace Blog.Application.Services
         {
             _logger.LogInformation("Tüm makaleler isteniyor.");
             var articles = await _repository.GetAllAsync();
-
             _logger.LogInformation("{Count} makale bulundu.", articles.Count());
 
-            // AutoMapper ile dönüşüm
             return _mapper.Map<IEnumerable<ArticleReadDto>>(articles);
         }
 
-        public async Task<ArticleReadDto> GetByIdAsync(int id)
+        public async Task<ArticleReadDto?> GetByIdAsync(int id)
         {
             _logger.LogInformation("Id'si {Id} olan makale isteniyor.", id);
 
@@ -42,7 +40,7 @@ namespace Blog.Application.Services
                 _logger.LogWarning("Id'si {Id} olan makale bulunamadı.", id);
                 return null;
             }
-            // AutoMapper ile dönüşüm
+
             return _mapper.Map<ArticleReadDto>(article);
         }
 
@@ -50,20 +48,18 @@ namespace Blog.Application.Services
         {
             _logger.LogInformation("Yeni makale oluşturuluyor: {@Dto}", dto);
 
-            // AutoMapper kullanarak ArticleCreateDto'dan ArticleEntity'a dönüşüm
             var article = _mapper.Map<ArticleEntity>(dto);
             article.CreatedAt = DateTime.UtcNow;
             article.UpdatedAt = DateTime.UtcNow;
-            article.UserId = authorId; // Author ilişkilendirmesi
+            article.AuthorId = authorId;
 
             var created = await _repository.CreateAsync(article);
             _logger.LogInformation("Makale oluşturuldu. Id: {Id}", created.Id);
 
-            // AutoMapper ile dönüşüm
             return _mapper.Map<ArticleReadDto>(created);
         }
 
-        public async Task<ArticleReadDto> UpdateAsync(int id, ArticleUpdateDto dto)
+        public async Task<ArticleReadDto?> UpdateAsync(int id, ArticleUpdateDto dto)
         {
             _logger.LogInformation("Id'si {Id} olan makale güncelleniyor.", id);
 
@@ -74,27 +70,26 @@ namespace Blog.Application.Services
                 return null;
             }
 
-            // AutoMapper ile DTO'dan Entity'ye dönüşüm/güncelleme
             _mapper.Map(dto, existing);
-            // Makale güncellenmeden önce UpdatedAt alanını UTC ile güncelle
             existing.UpdatedAt = DateTime.UtcNow;
 
-            // Veritabanındaki güncelleme işlemini Repository yapacak
             await _repository.UpdateAsync(existing);
             _logger.LogInformation("Makale güncellendi. Id: {Id}", id);
+
             return _mapper.Map<ArticleReadDto>(existing);
         }
 
         public async Task<bool> DeleteAsync(int id)
         {
             _logger.LogInformation("Id'si {Id} olan makale silinmek isteniyor.", id);
+
             var existing = await _repository.GetByIdAsync(id);
             if (existing == null) return false;
 
             await _repository.DeleteAsync(existing);
-            return true;
             _logger.LogInformation("Makale silindi. Id: {Id}", id);
 
+            return true;
         }
     }
 }

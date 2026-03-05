@@ -49,7 +49,7 @@ namespace Blog.Api.Middlewares
                 statusCode = HttpStatusCode.Unauthorized;
                 message = "Yetkisiz erişim.";
             }
-            // İstersen diğer özel exception tiplerini ekleyebilirsin
+           
 
             _logger.LogError(exception, "Unhandled exception occurred.");
 
