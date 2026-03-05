@@ -12,11 +12,13 @@ namespace Blog.Infrastructure.Data.Configurations
 
             builder.HasOne(x => x.Article)
                 .WithMany(x => x.ArticleTags)
-                .HasForeignKey(x => x.ArticleId);
+                .HasForeignKey(x => x.ArticleId)
+                .OnDelete(DeleteBehavior.Cascade); // Makale silinirse bağlantı silinsin
 
             builder.HasOne(x => x.Tag)
                 .WithMany(x => x.ArticleTags)
-                .HasForeignKey(x => x.TagId);
+                .HasForeignKey(x => x.TagId)
+                .OnDelete(DeleteBehavior.Cascade); // Tag silinirse bağlantı silinsin
         }
     }
 }

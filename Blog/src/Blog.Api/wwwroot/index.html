@@ -1,0 +1,74 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Blog App</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <div class="container mt-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4">Simple Blog</h1>
+            <p class="lead">Welcome to the Blog Application</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body text-center">
+                        <h4 class="mb-4">Menu</h4>
+
+                        <a href="login.html" id="loginBtn" class="btn btn-primary w-100 mb-3">Login</a>
+                        <a href="register.html" id="registerBtn" class="btn btn-success w-100 mb-3">Register</a>
+                        <a href="articles.html" id="articlesBtn" class="btn btn-dark w-100 mb-3">Articles</a>
+
+                        <a href="admin.html" id="adminBtn" class="btn btn-warning w-100 mb-3" style="display:none !important;">
+                            <strong>⚡ Admin Panel (Categories & Tags)</strong>
+                        </a>
+
+                        <button id="logoutBtn" class="btn btn-outline-danger w-100" style="display:none;">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const token = localStorage.getItem("token");
+            const role = localStorage.getItem("role");
+
+            const loginBtn = document.getElementById("loginBtn");
+            const registerBtn = document.getElementById("registerBtn");
+            const articlesBtn = document.getElementById("articlesBtn");
+            const logoutBtn = document.getElementById("logoutBtn");
+            const adminBtn = document.getElementById("adminBtn");
+
+            if (token) {
+                // Giriş yapılmışsa butonları düzenle
+                loginBtn.style.display = "none";
+                registerBtn.style.display = "none";
+                logoutBtn.style.display = "block";
+
+                // Admin kontrolü (1 veya Admin)
+                if (role && (role.toString() === "1" || role.toString().toLowerCase() === "admin")) {
+                    adminBtn.setAttribute("style", "display: block !important;");
+                }
+            } else {
+                // Giriş yapılmamışsa uyar
+                articlesBtn.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    alert("Please login first");
+                    window.location.href = "login.html";
+                });
+            }
+
+            logoutBtn.addEventListener("click", function () {
+                localStorage.clear();
+                alert("Logged out");
+                window.location.href = "index.html";
+            });
+        });
+    </script>
+</body>
+</html>

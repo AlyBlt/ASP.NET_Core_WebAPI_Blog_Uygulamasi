@@ -1,0 +1,77 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Articles</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="index.html">Blog App</a>
+            <div class="ms-auto">
+                <button class="btn btn-outline-light me-2" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="row">
+
+            <div class="col-md-8 mb-4">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Articles</h4>
+                        <ul id="articles" class="list-group list-group-flush"></ul>
+                        <button class="btn btn-primary mt-3 w-100" onclick="loadArticles()">Load Articles</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-4" id="createSection">
+                <div class="card shadow">
+                    <div class="card-body">
+                        <h4 class="card-title mb-3">Create Article</h4>
+
+                        <button id="showCreateBtn" class="btn btn-success mt-3 w-100" onclick="showCreateForm()">
+                            Create Article
+                        </button>
+
+                        <div id="createForm" style="display:none;">
+                            <div class="mb-3">
+                                <label class="form-label">Title</label>
+                                <input id="title" type="text" class="form-control" placeholder="Enter article title">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Content</label>
+                                <textarea id="content" class="form-control" rows="6" placeholder="Enter article content"></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Category</label>
+                                <select id="category" class="form-control" required></select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Tags</label>
+                                <select id="tags" class="form-control" multiple required></select>
+                                <small class="text-muted">Hold Ctrl to select multiple</small>
+                            </div>
+
+                            <button id="submitArticleBtn" class="btn btn-success w-100" onclick="createArticle()">
+                                Submit
+                            </button>
+
+                            <p id="result" class="text-center text-danger mt-2"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="js/article.js"></script>
+</body>
+</html>

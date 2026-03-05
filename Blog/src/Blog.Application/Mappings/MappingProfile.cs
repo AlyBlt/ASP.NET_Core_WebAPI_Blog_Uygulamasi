@@ -1,6 +1,10 @@
-﻿using Blog.Application.DTOs;
-using Blog.Domain.Entities;
+﻿using Blog.Domain.Entities;
 using AutoMapper;
+using Blog.Application.DTOs.Article;
+using Blog.Application.DTOs.Category;
+using Blog.Application.DTOs.Comment;
+using Blog.Application.DTOs.Tag;
+using Blog.Application.DTOs.User;
 
 namespace Blog.Application.Mappings
 {

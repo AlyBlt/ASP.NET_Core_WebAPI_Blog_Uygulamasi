@@ -1,4 +1,4 @@
-﻿using Blog.Application.DTOs;
+﻿using Blog.Application.DTOs.Category;
 using System;
 using System.Collections.Generic;
 using System.Linq;
