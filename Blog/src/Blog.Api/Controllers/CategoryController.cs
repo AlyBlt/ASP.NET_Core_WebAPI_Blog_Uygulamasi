@@ -1,4 +1,4 @@
-﻿using Blog.Application.DTOs;
+﻿using Blog.Application.DTOs.Category;
 using Blog.Application.Interfaces.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;

@@ -1,4 +1,4 @@
-﻿using Blog.Application.DTOs;
+﻿using Blog.Application.DTOs.Article;
 using Blog.Application.Interfaces.Services;
 using Blog.Domain.Enums;
 using FluentValidation;

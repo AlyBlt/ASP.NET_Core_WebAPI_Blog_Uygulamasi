@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Blog.Application.DTOs;
+using Blog.Application.DTOs.Article;
 using Blog.Application.Interfaces.Repositories;
 using Blog.Application.Interfaces.Services;
 using Blog.Domain.Entities;
@@ -48,10 +48,29 @@ namespace Blog.Application.Services
         {
             _logger.LogInformation("Yeni makale oluşturuluyor: {@Dto}", dto);
 
-            var article = _mapper.Map<ArticleEntity>(dto);
-            article.CreatedAt = DateTime.UtcNow;
-            article.UpdatedAt = DateTime.UtcNow;
-            article.AuthorId = authorId;
+            // ArticleEntity oluşturuluyor
+            var article = new ArticleEntity
+            {
+                Title = dto.Title,
+                Content = dto.Content,
+                AuthorId = authorId,
+                CategoryId = dto.CategoryId,
+                Status = dto.Status,
+                Slug = GenerateSlug(dto.Title),  // Slug'ı title'dan oluşturuyoruz
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow
+            };
+
+            // TagIds ile ilişki kurma (ArticleTagEntity)
+            foreach (var tagId in dto.TagIds)
+            {
+                article.ArticleTags.Add(new ArticleTagEntity
+                {
+                    ArticleId = article.Id,  // Makale id'si, henüz kaydedilmediği için boş
+                    TagId = tagId            // İlgili etiket id'si
+                });
+            }
+
 
             var created = await _repository.CreateAsync(article);
             _logger.LogInformation("Makale oluşturuldu. Id: {Id}", created.Id);
@@ -90,6 +109,12 @@ namespace Blog.Application.Services
             _logger.LogInformation("Makale silindi. Id: {Id}", id);
 
             return true;
+        }
+
+        // Slug'ı başlıktan oluşturma fonksiyonu
+        private string GenerateSlug(string title)
+        {
+            return title.ToLower().Trim().Replace(" ", "-"); // Basit bir slug örneği
         }
     }
 }

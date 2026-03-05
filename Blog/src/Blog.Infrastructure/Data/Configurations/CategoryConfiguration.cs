@@ -20,6 +20,12 @@ namespace Blog.Infrastructure.Data.Configurations
 
             builder.HasIndex(x => x.Slug)
                 .IsUnique();
+
+            // Kategori silinirse makaleler silinmesin, hata versin (Restrict)
+            builder.HasMany(x => x.Articles)
+                .WithOne(x => x.Category)
+                .HasForeignKey(x => x.CategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

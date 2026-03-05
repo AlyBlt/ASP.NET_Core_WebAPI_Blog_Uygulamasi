@@ -1,4 +1,4 @@
-﻿using Blog.Application.DTOs;
+﻿using Blog.Application.DTOs.Auth;
 using Blog.Application.Interfaces.Services;
 using Blog.Domain.Enums;
 using Microsoft.AspNetCore.Authorization;

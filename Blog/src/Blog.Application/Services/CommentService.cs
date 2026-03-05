@@ -1,5 +1,5 @@
 ﻿using AutoMapper;
-using Blog.Application.DTOs;
+using Blog.Application.DTOs.Comment;
 using Blog.Application.Interfaces.Repositories;
 using Blog.Application.Interfaces.Services;
 using Blog.Domain.Entities;

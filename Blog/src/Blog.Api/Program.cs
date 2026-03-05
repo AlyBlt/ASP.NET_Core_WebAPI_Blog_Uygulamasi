@@ -1,8 +1,7 @@
-using Blog.Application.Mappings; 
+using Blog.Application.Mappings;
 using Blog.Api.Middlewares;
 using Blog.Application.Interfaces.Services;
 using Blog.Application.Interfaces.Repositories;
-using Blog.Application.Validators; // Application katmaný
 using Blog.Domain.Entities;
 using Blog.Infrastructure.Data;
 using Blog.Infrastructure.Repositories;
@@ -15,6 +14,11 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using Blog.Application.Validators.Article;
+using Blog.Application.Validators.Category;
+using Blog.Application.Validators.Comment;
+using Blog.Application.Validators.Auth;
+using Blog.Application.Validators.Tag;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configuration dosyasýný alýyoruz
@@ -53,7 +57,16 @@ builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
 builder.Services.AddFluentValidationAutoValidation(); // Middleware için
 builder.Services.AddFluentValidationClientsideAdapters(); // Opsiyonel, Swagger / UI tarafý için
-builder.Services.AddValidatorsFromAssemblyContaining<ArticleCreateValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ArticleCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<ArticleUpdateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<RegisterDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<LoginDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CategoryCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CategoryUpdateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<TagCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<TagUpdateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CommentCreateDtoValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CommentUpdateDtoValidator>();
 
 builder.Services.AddDbContext<BlogDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -64,6 +77,13 @@ builder.Services.AddScoped<IArticleService, ArticleService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ITagRepository, TagRepository>();
+builder.Services.AddScoped<ITagService, TagService>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+
 
 
 // PasswordHasher
@@ -115,7 +135,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowLocalhost",
        policy =>
        {
-           policy.WithOrigins("http://localhost:7079")  // Burada frontend URL'mizi belirtiyoruz
+           policy.WithOrigins("http://localhost:7281")  // Burada frontend URL'mizi belirtiyoruz
                  .AllowAnyHeader()
                   .AllowAnyMethod();
        });
@@ -143,6 +163,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.UseAuthentication();  // Bu satýr, JWT doðrulamasý yapacak
 

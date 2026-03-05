@@ -1,4 +1,4 @@
-﻿using Blog.Application.DTOs;
+﻿using Blog.Application.DTOs.Article;
 
 namespace Blog.Application.Interfaces.Services
 {
