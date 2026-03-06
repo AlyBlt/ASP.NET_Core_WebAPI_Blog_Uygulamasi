@@ -2,41 +2,39 @@
 
 ## 📌 Proje Açıklaması
 
-Bu proje, ASP.NET Core Web API kullanılarak geliştirilmiş basit bir **Blog Yönetim Sistemi** API'sidir. Kullanıcılar blog gönderilerini görüntüleyebilir; yazarlar ise gönderi oluşturabilir, düzenleyebilir ve silebilir. Proje, temel CRUD işlemleri ve backend geliştirme becerilerimi sergilemek için hazırlanmıştır.
+Bu depo, .NET 8 ile geliştirilmiş bir ASP.NET Core Web API blog uygulamasıdır. Projenin temel amacı, modern bir backend uygulamasının geliştirilmesinden ziyade; Dockerize edilmesi, Nginx Reverse Proxy ile yapılandırılması ve GitHub Actions tabanlı CI/CD süreçleriyle bulut ortamına (Vultr) taşınmasını deneyimlemek ve sergilemektir.
 
 ---
 
-## 🛠️ Kullanılan Teknolojiler
+## 🛠️ Tech stack
 
-| Katman / Araç       | Teknoloji                |
-|---------------------|--------------------------|
-| Backend Framework   | ASP.NET Core Web API     |
-| ORM                 | Entity Framework Core    |
-| Veritabanı          | SQL Server               |
-| Kimlik Doğrulama    | JWT (JSON Web Token)     |
-| API Dökümantasyonu  | Swagger / OpenAPI        |
-| Logging             | Serilog                  |
-| Validasyon          | FluentValidation         |
-| Test                | xUnit _(planlanıyor)_    |
-| Versiyon Kontrolü   | Git & GitHub             |
-| Global Hata Yöntemi | Exception Handling       |
+- .NET 8 (ASP.NET Core Web API)  
+- Entity Framework Core (SQL Server)  
+- JWT (Microsoft.IdentityModel.Tokens)  
+- FluentValidation, Serilog  
+- AutoMapper
+- Swagger (opsiyonel)  
+- xUnit (unit testler mevcut)  
+- Docker / Docker Compose  
+- GitHub Actions (CI/CD)  
+- Nginx (reverse proxy) 
 
 ---
 
-## ✨ Uygulama Özellikleri
+## ✨ Öne çıkan özellikler
+- Makaleleri listeleme, detay görüntüleme, oluşturma, güncelleme, silme  
+- Kategori / Tag / Comment CRUD işlemleri
+- Role-based authorization (Admin / Author / User)  
+- EF Core migrations + otomatik DB seeding (Program.cs içinde)  
+- Statik frontend örnekleri: `wwwroot/index.html`, `wwwroot/articles.html`, `wwwroot/article.html`  
+- Docker Compose geliştirme konfigürasyonu (`docker-compose.yml`)  
+- **CI/CD:** Test -> Image Build -> Push -> Deploy (GitHub Actions)
 
-- Blog gönderilerini listeleme, detay görüntüleme
-- Yeni gönderi oluşturma, düzenleme, silme
-- RESTful mimari yapısı
-- Entity Framework Core ile veritabanı işlemleri
-- Katmanlı mimari planlaması (Controller / Service / Repository)
-- Swagger ile API test arayüzü
-- JWT Authentication
-- Validasyon ve hata yönetimi
+---
 
-## 🚀 Kurulum ve Çalıştırma
+## 🚀 Hızlı Başlatma — Local (Docker)
 
-### 1️⃣ Klonla
+### 1️⃣ Depoyu klonlayın:
 
 ```bash
 git clone https://github.com/AlyBlt/ASP.NET_Core_WebAPI_Blog_Uygulamasi.git
@@ -44,32 +42,26 @@ cd ASP.NET_Core_WebAPI_Blog_Uygulamasi
 
 ```
 
-### 2️⃣ Projeyi Aç
+### 2️⃣ `.env` oluşturun (örnek):
 
-Visual Studio veya Visual Studio Code ile projeyi aç.
+DB_NAME, DB_USER, DB_PASSWORD, JWT_SECRET gibi çevresel değişkenleri içeren .env dosyanızın ana dizinde olduğundan emin olun.
 
-### 3️⃣ Veritabanı Ayarlarını Yap
+### 3️⃣ Docker image build ve up:
 
-appsettings.json dosyasındaki Connection String'i kendi bilgisayarına göre düzenle.
+```docker compose up -d --build```
 
-### 4️⃣ Migration ve Veritabanı Oluştur (Varsa)
+> ⚙️ **Port Yapılandırma Notu:** Proje, canlı sunucu (CI/CD) ve Nginx entegrasyonu gereksinimleri nedeniyle varsayılan olarak **11011** portu üzerinden sunulmaktadır.
+> 
+> * **Varsayılan Erişim:** `http://localhost:11011/swagger`
+> * **Port Değişimi:** Eğer yerelinizde geleneksel `5000` portunu kullanmak isterseniz, `docker-compose.yml` dosyasındaki `ports` satırını `- "5000:8080"` şeklinde güncelleyerek komutu yeniden çalıştırabilirsiniz.
 
-```bash
-dotnet ef database update
-```
+> **Erişim Detayları (Varsayılan)**
+
+- Frontend: `http://localhost:11011/index.html`
+- Health check: `http://localhost:11011/health`
+- Swagger UI (ShowSwagger=true): `http://localhost:11011/swagger`
 
 ---
-
-### 5️⃣ Uygulamayı Başlat
-
-```bash
-dotnet run
-```
-
-### 6️⃣ Swagger Arayüzü ile Test Et
-
-Tarayıcıdan aç:
-👉 https://localhost:5001/swagger (ya da uygulamanın çalıştığı port)
 
 ## 🔐 Rol Tabanlı Yetkilendirme
 
@@ -77,58 +69,57 @@ Tarayıcıdan aç:
 |-------|-----------------------------------------------------------------------|
 | User  | Blogları listeleyebilir ve detaylarını görebilir.                     |
 | Author| Blog yazısı oluşturabilir, güncelleyebilir, silebilir.                |
-| Admin | Kullanıcıların rollerini değiştirebilir.                              |
+| Admin | Tüm CRUD yetkileri + Kullanıcı rollerini yönetme.                     |
 
 > 🛑 **Register işlemi sadece `User` rolü ile kayıt olmayı destekler.**  
 > ✅ **Admin**, kullanıcıların rollerini `"Admin"`, `"Author"` veya `"User"` olarak güncelleyebilir.
 
-## 📡 API Endpointleri (Örnek)
+---
 
-| HTTP Metodu | Rota                          | Açıklama                                  |
-|-------------|-------------------------------|-------------------------------------------|
-| POST        | /api/user/register            | Yeni kullanıcı kaydı _(sadece User)_      |
-| POST        | /api/user/login               | Giriş ve token alımı                      |
-| PUT         | /api/user/update-role/{id}    | Admin tarafından rol güncelleme           |
-| GET         | /api/posts                    | Tüm gönderileri getir                     |
-| GET         | /api/posts/{id}               | ID ile gönderi getir                      |
-| POST        | /api/posts                    | Yeni gönderi oluştur _(sadece Author)_    |
-| PUT         | /api/posts/{id}               | Gönderiyi güncelle _(sadece Author)_      |
-| DELETE      | /api/posts/{id}               | Gönderiyi sil _(sadece Author)_           |
+## ℹ️ CI/CD ve Prod Deploy (özet)
+- GitHub Actions workflow: commit → `dotnet test` → Docker image build → push → (opsiyonel) SSH ile sunucuya deploy.
+- Örnek akış:
+  - Build image: `docker build -t myregistry/blog-api:${{ github.sha }} -f src/Blog.Api/Dockerfile .`
+  - Push: registry (Docker Hub / ACR / ghcr.io)
+  - Sunucuda: `docker compose pull && docker compose up -d`
+- Secrets: `DOCKERHUB_USER`, `DOCKERHUB_TOKEN`, `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY` vb.
 
+---
 
 ## 📁 Proje Yapısı
 
 ```text
-├── Controllers       # API uç noktalarını barındırır
-├── Data              # Veritabanı context ve seed işlemleri
-├── DTOs              # Veri transfer nesneleri (Request/Response)
-├── Helpers           # Yardımcı sınıflar ve sabitler
-├── Mappings          # AutoMapper konfigürasyonları
-├── Middlewares       # Özel hata yakalama gibi middleware'ler
-├── Migrations        # EF Core migration dosyaları
-├── Models            # Veritabanı entity sınıfları
-├── Repositories      # Veri erişim işlemleri (interface + implementation)
-├── Services          # İş mantığı katmanı
-└── Validators        # FluentValidation sınıfları
+.
+├── .github
+│   └── workflows
+│       └── deploy.yml          # GitHub Actions CI/CD yapılandırması
+├── BLOG
+|   |── Solution Items 	        # örneğin: Dockerfile, .dockerignore, docker-compose.yml, .env)
+|   |── tests
+│   ├── src
+│   │   ├── Blog.Api            # Sunum Katmanı (Web API/wwwroot)
+│   │   │── Blog.Infrastructure # Veri Erişim Katmanı (EF Core)
+│   │   ├── Blog.Application    # İş Mantığı (Business Logic)
+│   │   └── Blog.Domain         # Veri Modelleri (Entities)
+│   └── Blog.sln                # Visual Studio Çözüm Dosyası
+└── README.md                   # Proje Dokümantasyonu
 ```
+
+---
 
 ## ✅ Yol Haritası
 
-- [x] CRUD işlemleri  
-- [x] Katmanlı mimariye geçiş  
 - [x] JWT ile kimlik doğrulama  
-- [x] Swagger entegrasyonu  
+- [x] AutoMapper ile DTO - entity dönüşümleri
 - [x] Logging (Serilog)  
 - [x] FluentValidation ile input doğrulama  
 - [x] Global Exception Handling  
-- [ ] xUnit ile test senaryoları  
-- [ ] README güncellemeleri  
-- [ ] Docker ile yayınlama _(isteğe bağlı)_  
+- [x] xUnit ile test senaryoları  
+- [x] Docker & Docker Compose Entegrasyonu 
+- [x] GitHub Actions CI/CD Pipeline
+- [x] Nginx Reverse Proxy yapılandırması 
 
-
-## 🖼️ Örnek Ekran Görüntüleri _(planlanıyor)_
-
-> Projenin çalışır hali tamamlandığında buraya Swagger görüntüsü ve Postman örnekleri eklenecektir.
+---
 
 ## 🤝 Katkıda Bulunmak
 
@@ -138,6 +129,6 @@ Forklayabilir, issue açabilir ya da pull request gönderebilirsiniz.
 ## 👩‍💻 Geliştirici
 
 **Aliye Bulut, PhD**  
-Junior Backend Developer | Biomedical Engineer  
+Backend Developer 
 📫 [LinkedIn Profilim](https://www.linkedin.com/in/aliye-bulut-phd-867453357/)  
 📂 [GitHub Sayfam](https://github.com/AlyBlt)
