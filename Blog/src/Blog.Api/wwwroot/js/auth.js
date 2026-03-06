@@ -1,4 +1,4 @@
-﻿const API = "https://localhost:7281/api/user"; // UserController route
+﻿const API = "/api/user"; // UserController route
 
 async function login() {
     const username = document.getElementById("username").value;

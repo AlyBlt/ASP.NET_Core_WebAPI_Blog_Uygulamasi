@@ -1,4 +1,4 @@
-﻿const API = "https://localhost:7281/api/articles";
+﻿const API = "/api/articles";
 const token = localStorage.getItem("token");
 
 // URL'den ID'yi al (örneğin: updateArticle.html?id=5)
@@ -19,8 +19,8 @@ async function loadCategoriesAndTags() {
     const headers = { "Authorization": "Bearer " + token };
     try {
         const [resC, resT] = await Promise.all([
-            fetch('https://localhost:7281/api/categories', { headers }),
-            fetch('https://localhost:7281/api/tags', { headers })
+            fetch('/api/categories', { headers }),
+            fetch('/api/tags', { headers })
         ]);
 
         const categories = await resC.json();
