@@ -1,24 +1,26 @@
-using Blog.Application.Mappings;
 using Blog.Api.Middlewares;
-using Blog.Application.Interfaces.Services;
 using Blog.Application.Interfaces.Repositories;
+using Blog.Application.Interfaces.Services;
+using Blog.Application.Services;
+using Blog.Application.Validators.Article;
+using Blog.Application.Validators.Auth;
+using Blog.Application.Validators.Category;
+using Blog.Application.Validators.Comment;
+using Blog.Application.Validators.Tag;
 using Blog.Domain.Entities;
 using Blog.Infrastructure.Data;
 using Blog.Infrastructure.Repositories;
-using Blog.Application.Services;
-using Microsoft.AspNetCore.Identity;
-using FluentValidation.AspNetCore;
 using FluentValidation;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Blog.Application.Validators.Article;
-using Blog.Application.Validators.Category;
-using Blog.Application.Validators.Comment;
-using Blog.Application.Validators.Auth;
-using Blog.Application.Validators.Tag;
+using System.Text;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 // Configuration dosyasýný alýyoruz
@@ -54,6 +56,10 @@ builder.Logging.AddConsole();     // console log ekle
 
 builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+});
 
 builder.Services.AddFluentValidationAutoValidation(); // Middleware için
 builder.Services.AddFluentValidationClientsideAdapters(); // Opsiyonel, Swagger / UI tarafý için
@@ -135,11 +141,21 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowLocalhost",
        policy =>
        {
-           policy.WithOrigins("http://localhost:7281")  // Burada frontend URL'mizi belirtiyoruz
+           policy.SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")
                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+                 .AllowAnyMethod();
        });
 });
+
+// 1. Servis Kaydý (HEALTHCHECKS)
+builder.Services.AddHealthChecks()
+    .AddCheck("Self", () => HealthCheckResult.Healthy("API is running")) // API'nin kendisi
+    .AddSqlServer(
+        connectionString: builder.Configuration.GetConnectionString("DefaultConnection"),
+        name: "Database",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: new[] { "db", "sql", "sqlserver" }
+    );
 
 var app = builder.Build();
 
@@ -149,19 +165,16 @@ app.UseCors("AllowLocalhost");  // "AllowLocalhost" burada eklediðimiz policy ad
 
 app.UseMiddleware<ExceptionMiddleware>();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Configuration["ShowSwagger"] == "true")
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
-        // AddSwaggerGen içinde kullandýðýmýz isim ("v1") ile eþleþmelidir.
-        // Bu, UI'ýn doðru JSON dosyasý kaynaðýný bulmasýný saðlar.
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Blog API v1");
-
     });
-
 }
 
+app.UseForwardedHeaders();
 app.UseHttpsRedirection();
 
 app.UseDefaultFiles();
@@ -176,7 +189,34 @@ app.MapControllers();
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<BlogDbContext>();
+    // CANLIYA ÇIKIÞ ÝÇÝN KRÝTÝK: Tablolar yoksa oluþturur, varsa günceller.
+    await context.Database.MigrateAsync();
     await SeedData.SeedAsync(context);
 }
+
+// 2. Endpoint Tanýmý 
+app.MapHealthChecks("/health", new HealthCheckOptions
+{
+    ResponseWriter = async (context, report) =>
+    {
+        context.Response.ContentType = "application/json";
+
+        var response = new
+        {
+            status = report.Status.ToString(),
+            environment = app.Environment.EnvironmentName, // Ortam bilgisi (Development/Production)
+            checks = report.Entries.Select(x => new
+            {
+                component = x.Key,
+                status = x.Value.Status.ToString(),
+                description = x.Value.Description,
+                duration = x.Value.Duration.ToString()
+            }),
+            totalDuration = report.TotalDuration
+        };
+
+        await context.Response.WriteAsJsonAsync(response);
+    }
+});
 
 app.Run();

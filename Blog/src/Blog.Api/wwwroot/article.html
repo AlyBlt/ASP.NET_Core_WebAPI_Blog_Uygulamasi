@@ -32,7 +32,7 @@
     </div>
 
     <script>
-const API = "https://localhost:7281/api/articles";
+const API = "/api/articles";
 const token = localStorage.getItem("token");
 
 if (!token) {
@@ -67,12 +67,11 @@ async function loadArticle() {
 }
 
 // Logout
-function logout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("role");
-    alert("Logged out");
-    window.location.href = "login.html";
-}
+        function logout() {
+            localStorage.clear(); // Hepsini tek seferde temizle
+            alert("Logged out");
+            window.location.href = "login.html";
+        }
 
 loadArticle();
     </script>

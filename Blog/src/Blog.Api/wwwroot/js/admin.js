@@ -1,5 +1,5 @@
-﻿const CAT_API = "https://localhost:7281/api/categories";
-const TAG_API = "https://localhost:7281/api/tags";
+﻿const CAT_API = "/api/categories";
+const TAG_API = "/api/tags";
 const token = localStorage.getItem("token");
 
 document.addEventListener("DOMContentLoaded", () => {

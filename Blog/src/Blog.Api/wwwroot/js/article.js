@@ -1,4 +1,4 @@
-﻿const API = "https://localhost:7281/api/articles";
+﻿const API = "/api/articles";
 const token = localStorage.getItem("token");
 const role = localStorage.getItem("role");
 const userId = localStorage.getItem("userId");
@@ -30,13 +30,13 @@ async function loadCategoriesAndTags() {
         const headers = { "Authorization": "Bearer " + token };
 
         // Kategoriler
-        const resCat = await fetch('https://localhost:7281/api/categories', { headers });
+        const resCat = await fetch('/api/categories', { headers });
         const categories = await resCat.json();
         const catSelect = document.getElementById("category");
         catSelect.innerHTML = categories.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
 
         // Tagler
-        const resTag = await fetch('https://localhost:7281/api/tags', { headers });
+        const resTag = await fetch('/api/tags', { headers });
         const tags = await resTag.json();
         const tagsSelect = document.getElementById("tags");
         tagsSelect.innerHTML = tags.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
