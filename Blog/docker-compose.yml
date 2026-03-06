@@ -1,6 +1,7 @@
 services:
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: blog-db
     environment:
       - ACCEPT_EULA=Y
       - MSSQL_SA_PASSWORD=${DB_PASSWORD}
@@ -13,9 +14,11 @@ services:
       interval: 10s
       timeout: 3s
       retries: 10
+      # Healthcheck'i tamamen silebilirsin ya da kalsýn, ama API ona bakmasýn.
 
   api:
-    image: blog-api-app:latest
+    image: alyblt/blog-api:latest  # Docker Hub imaj ismin bu olmalý!
+    container_name: blog-api
     ports:
       - "11011:8080"
     environment:
@@ -27,7 +30,7 @@ services:
       - ShowSwagger=${ShowSwagger}
     depends_on:
       db:
-        condition: service_healthy
+        condition: service_started # "service_healthy" yerine "service_started" yaptýk!
 
 volumes:
   sql_data:

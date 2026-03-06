@@ -34,8 +34,14 @@ jobs:
           envs: DB_PASSWORD,DB_USER,DB_NAME,JWT_SECRET,JWT_ISSUER,JWT_AUDIENCE,ShowSwagger
           script: |
             cd ~/blog-app
+            # 1. Eski konteynerleri ve aðlarý temizle (Çakýþmalarý önler)
+            # --remove-orphans: Tanýmlý olmayan eski kalýntýlarý da siler
+            docker-compose down --remove-orphans
+
+            # 2. Yeni imajý çek
             docker-compose pull
-            # Þifreleri docker-compose çalýþýrken içeri enjekte ediyoruz
+
+            # 3. Þifreleri enjekte ederek tertemiz baþlat
             DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             DB_USER="${{ secrets.DB_USER }}" \
             DB_NAME="${{ secrets.DB_NAME }}" \
@@ -44,4 +50,6 @@ jobs:
             JWT_AUDIENCE="${{ secrets.JWT_AUDIENCE }}" \
             ShowSwagger="${{ secrets.ShowSwagger }}" \
             docker-compose up -d
+
+            # 4. Kullanýlmayan eski imajlarý temizle (Disk dolmasýn)
             docker image prune -f
