@@ -17,7 +17,7 @@ services:
   api:
     image: blog-api-app:latest
     ports:
-      - "5000:8080"
+      - "11011:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__DefaultConnection=Server=db;Database=${DB_NAME};User Id=${DB_USER};Password=${DB_PASSWORD};TrustServerCertificate=True
