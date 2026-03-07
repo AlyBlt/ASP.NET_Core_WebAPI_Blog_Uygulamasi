@@ -32,6 +32,19 @@ Bu depo, .NET 8 ile geliştirilmiş bir ASP.NET Core Web API blog uygulamasıdı
 
 ---
 
+## 🌐 Canlı Demo (Live Demo)
+
+> [!ÖNEMLİ]
+> Bu proje bir eğitim ve portfolyo sunucusunda barındırılmaktadır. Sunucu kaynakları nedeniyle **Nisan 2026** tarihine kadar erişime açık kalacaktır.
+
+Projenin canlı ortamdaki yapılandırmasını aşağıdaki bağlantılardan inceleyebilirsiniz:
+
+* **Swagger UI (API Dokümantasyonu):** [http://209.250.233.73:11011/swagger/index.html]
+* **Web Arayüzü (Frontend Örneği):** [http://devops101.gturkmen.net:11011/index.html](http://209.250.233.73:11011/index.html)
+* **Nginx Reverse Proxy Erişimi:** [http://209.250.233.73/]
+
+---
+
 ## 🚀 Hızlı Başlatma — Local (Docker)
 
 ### 1️⃣ Depoyu klonlayın:
